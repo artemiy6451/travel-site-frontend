@@ -1,0 +1,26 @@
+:root {
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+  font-family: Montserrat;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 15px;
+  leading-trim: NONE;
+  line-height: 25px;
+  letter-spacing: 0%;
+
+}
+
+body {
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
