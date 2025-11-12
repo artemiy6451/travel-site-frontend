@@ -1,0 +1,599 @@
+<template>
+  <div class="excursion-detail-modern">
+    <!-- Хедер с навигацией -->
+    <header class="modern-header">
+      <nav class="nav-container">
+        <BaseButton variant="secondary" size="sm" @click="$router.back()" class="nav-back" icon="‹">
+          Назад
+        </BaseButton>
+
+        <div class="nav-actions">
+          <BaseButton variant="secondary" size="sm" icon="📤" @click="handleShare" class="nav-btn" title="Поделиться" />
+        </div>
+      </nav>
+    </header>
+
+    <DataState :loading="loading" :error="error" loading-message="Загружаем детали экскурсии..."
+      error-title="Что-то пошло не так" @retry="loadExcursion">
+      <!-- Контент экскурсии -->
+      <div v-if="excursion" class="modern-content">
+        <!-- Hero секция -->
+        <section class="hero-section">
+          <div class="hero-image-container">
+            <img :src="excursion.image_url" :alt="excursion.title" class="hero-image" @error="handleImageError">
+            <div class="image-overlay"></div>
+            <div class="hero-badge">
+              <span class="badge-text">{{ getCategoryName(excursion.category) }}</span>
+            </div>
+          </div>
+
+          <div class="hero-content">
+            <h1 class="hero-title">{{ excursion.title }}</h1>
+            <div class="hero-meta">
+              <div class="meta-item">
+                <span class="meta-icon">📍</span>
+                <span class="meta-text">{{ getCategoryName(excursion.category) }} тур</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+          <!-- Быстрые факты -->
+          <ExcursionFacts :excursion="excursion" />
+
+          <!-- Полное описание маршрута -->
+          <ExcursionDescription :description="getFullDescription(excursion)" title="О маршруте" />
+
+          <!-- Место сбора -->
+          <div v-if="excursion.details?.meeting_point" class="meeting-point-section">
+            <h2 class="section-title">📍 Место сбора</h2>
+            <div class="meeting-point-content">
+              <p>{{ excursion.details.meeting_point }}</p>
+            </div>
+          </div>
+
+          <!-- Что включено -->
+          <ExcursionIncluded :items="getIncludedItems(excursion)" title="Что включено" />
+
+          <!-- Требования к участникам -->
+          <div v-if="hasRequirements(excursion)" class="requirements-section">
+            <h2 class="section-title">🎯 Требования к участникам</h2>
+            <div class="requirements-list">
+              <div v-for="(requirement, index) in excursion.details.requirements" :key="index" class="requirement-item">
+                <span class="requirement-icon">✓</span>
+                <span class="requirement-text">{{ requirement }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Рекомендации -->
+          <div v-if="hasRecommendations(excursion)" class="recommendations-section">
+            <h2 class="section-title">💡 Рекомендации</h2>
+            <div class="recommendations-list">
+              <div v-for="(recommendation, index) in excursion.details.recommendations" :key="index"
+                class="recommendation-item">
+                <span class="recommendation-icon">💡</span>
+                <span class="recommendation-text">{{ recommendation }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Программа тура -->
+          <ExcursionItinerary :itinerary="getItinerary(excursion)" title="Программа тура" />
+        </main>
+      </div>
+    </DataState>
+
+    <!-- Floating Action Button -->
+    <div v-if="excursion" class="fab-container">
+      <div class="price-display">
+        <div class="price-amount">{{ formatPrice(excursion.price) }}</div>
+        <div class="price-label">за человека</div>
+        <div v-if="excursion.people_left > 0" class="spots-left">
+          Осталось {{ excursion.people_left }} мест
+        </div>
+        <div v-else class="spots-left sold-out">
+          Мест нет
+        </div>
+      </div>
+
+      <BaseButton variant="primary" size="lg" @click="handleBooking" class="fab-button" icon="🎫" full-width
+        :disabled="excursion.people_left === 0">
+        {{ excursion.people_left > 0 ? 'Забронировать' : 'Мест нет' }}
+      </BaseButton>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { api, type Excursion, type ExcursionFullInfo } from '@/utils/api'
+import BaseButton from '@/components/UI/BaseButton.vue'
+import DataState from '@/components/UI/DataState.vue'
+import ExcursionFacts from '@/components/Excursion/ExcursionFacts.vue'
+import ExcursionDescription from '@/components/Excursion/ExcursionDescription.vue'
+import ExcursionIncluded from '@/components/Excursion/ExcursionIncluded.vue'
+import ExcursionItinerary from '@/components/Excursion/ExcursionItinerary.vue'
+
+const route = useRoute()
+const router = useRouter()
+
+const excursion = ref<ExcursionFullInfo | null>(null)
+const loading = ref(false)
+const error = ref('')
+
+// Загрузка данных экскурсии
+const loadExcursion = async () => {
+  const excursionId = parseInt(route.params.id as string)
+
+  if (isNaN(excursionId)) {
+    error.value = 'Неверный ID экскурсии'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    // Используем новый метод для получения полной информации
+    excursion.value = await api.getExcursionFull(excursionId)
+  } catch (err: any) {
+    error.value = err.message || 'Не удалось загрузить экскурсию'
+    console.error('Error loading excursion:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Обработка бронирования
+const handleBooking = () => {
+  if (!excursion.value || excursion.value.people_left === 0) return
+  window.open('https://vk.com/vvvectaa', '_blank')
+}
+
+// Дополнительные функции
+const handleShare = () => {
+  if (navigator.share) {
+    navigator.share({
+      title: excursion.value?.title,
+      text: excursion.value?.description,
+      url: window.location.href
+    })
+  } else {
+    navigator.clipboard.writeText(window.location.href)
+    alert('Ссылка скопирована в буфер обмена!')
+  }
+}
+
+// Получение полного описания
+const getFullDescription = (excursion: ExcursionFullInfo): string => {
+  return excursion.details?.description || excursion.description
+}
+
+// Получение включенных услуг
+const getIncludedItems = (excursion: ExcursionFullInfo): string[] => {
+  if (excursion.details?.inclusions && excursion.details.inclusions.length > 0) {
+    return excursion.details.inclusions
+  }
+
+  // Fallback базовые включения
+  const baseItems = [
+    'Профессиональный гид',
+    'Трансфер от точки сбора',
+    'Страхование'
+  ]
+
+  if (excursion.duration > 240) baseItems.push('Питание')
+  if (excursion.category === 'горные') baseItems.push('Снаряжение')
+  if (excursion.category === 'морские') baseItems.push('Спасательные жилеты')
+
+  return baseItems
+}
+
+// Получение программы тура
+const getItinerary = (excursion: ExcursionFullInfo): any[] => {
+  if (excursion.details?.itinerary && excursion.details.itinerary.length > 0) {
+    return excursion.details.itinerary
+  }
+
+  // Fallback базовая программа
+  const baseItinerary = [
+    {
+      title: 'Встреча группы',
+      description: 'Знакомство с гидом и участниками, инструктаж по технике безопасности'
+    },
+    {
+      title: 'Начало маршрута',
+      description: 'Отправление по запланированному маршруту'
+    },
+    {
+      title: 'Завершение тура',
+      description: 'Возвращение к точке сбора, подведение итогов'
+    }]
+
+  return baseItinerary
+}
+
+// Проверка наличия требований
+const hasRequirements = (excursion: ExcursionFullInfo): boolean => {
+  return !!(excursion.details?.requirements && excursion.details.requirements.length > 0)
+}
+
+// Проверка наличия рекомендаций
+const hasRecommendations = (excursion: ExcursionFullInfo): boolean => {
+  return !!(excursion.details?.recommendations && excursion.details.recommendations.length > 0)
+}
+
+// Вспомогательные функции
+const formatPrice = (price: number): string => {
+  return `${price.toLocaleString('ru-RU')} ₽`
+}
+
+const getCategoryName = (category: string): string => {
+  const categories: { [key: string]: string } = {
+    'горные': 'Горные',
+    'морские': 'Морские',
+    'исторические': 'Исторические',
+    'природа': 'Природа',
+    'городские': 'Городские'
+  }
+  return categories[category] || category
+}
+
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement
+  target.src = 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?ixlib=rb-4.0.3&w=800&h=400&fit=crop'
+}
+
+// Загрузка при монтировании
+onMounted(() => {
+  loadExcursion()
+})
+</script>
+
+<style scoped>
+.excursion-detail-modern {
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Хедер */
+.modern-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+:deep(.nav-back.base-button) {
+  background: none;
+  border: 1px solid #e2e8f0;
+  color: #666;
+  font-weight: normal;
+}
+
+:deep(.nav-back.base-button:hover:not(.disabled)) {
+  background: #f5f5f5;
+  color: #333;
+  border-color: #d1d5db;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 8px;
+}
+
+:deep(.nav-btn.base-button) {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  min-width: auto;
+  border-radius: 10px;
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+}
+
+:deep(.nav-btn.base-button:hover:not(.disabled)) {
+  background: #e9ecef;
+  transform: scale(1.05);
+  border-color: #d1d5db;
+}
+
+/* Hero секция */
+.hero-section {
+  position: relative;
+}
+
+.hero-image-container {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  overflow: hidden;
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3));
+}
+
+.hero-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.hero-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px 20px;
+  color: white;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  line-height: 1.2;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Основной контент */
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px 120px;
+}
+
+/* Секция места сбора */
+.meeting-point-section {
+  margin-bottom: 40px;
+}
+
+.meeting-point-content {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 4px solid #10b981;
+}
+
+.meeting-point-content p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+}
+
+/* Секция требований */
+.requirements-section {
+  margin-bottom: 40px;
+}
+
+.requirements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.requirement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #fff7ed;
+  border-radius: 8px;
+  border: 1px solid #fed7aa;
+}
+
+.requirement-icon {
+  color: #ea580c;
+  font-weight: bold;
+  font-size: 14px;
+  min-width: 20px;
+}
+
+.requirement-text {
+  color: #7c2d12;
+  line-height: 1.5;
+}
+
+/* Секция рекомендаций */
+.recommendations-section {
+  margin-bottom: 40px;
+}
+
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+}
+
+.recommendation-icon {
+  color: #0369a1;
+  font-size: 14px;
+  min-width: 20px;
+}
+
+.recommendation-text {
+  color: #0c4a6e;
+  line-height: 1.5;
+}
+
+/* Общие стили для секций */
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+/* Floating Action Button */
+.fab-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.price-display {
+  text-align: left;
+}
+
+.price-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.price-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.spots-left {
+  font-size: 11px;
+  color: #059669;
+  font-weight: 500;
+}
+
+.spots-left.sold-out {
+  color: #dc2626;
+}
+
+:deep(.fab-button.base-button) {
+  flex: 1;
+  max-width: 200px;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 16px 24px;
+}
+
+:deep(.fab-button.base-button:hover:not(.disabled)) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+:deep(.fab-button.base-button.disabled) {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .fab-container {
+    padding: 12px 16px;
+  }
+
+  .price-amount {
+    font-size: 20px;
+  }
+
+  :deep(.fab-button.base-button) {
+    padding: 14px 20px;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 1.75rem;
+  }
+
+  .hero-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .main-content {
+    padding: 20px 16px 100px;
+  }
+
+  :deep(.nav-back.base-button) {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+
+  :deep(.nav-btn.base-button) {
+    width: 36px;
+    height: 36px;
+  }
+
+  .meeting-point-content,
+  .requirement-item,
+  .recommendation-item {
+    padding: 16px;
+  }
+}
+</style>

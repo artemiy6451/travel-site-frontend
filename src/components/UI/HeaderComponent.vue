@@ -1,7 +1,7 @@
 <template>
   <div class="header_container">
     <div class="header_logo">
-      <img src="../assets/header_logo.svg" alt="header logo" class="logo">
+      <img src="@/assets/logo.png" alt="header logo" class="logo">
     </div>
 
     <div class="header_center">
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import SupportWidget from "@/UI/SupportWidget.vue"
+import SupportWidget from "@/components/UI/SupportWidget.vue"
 </script>
 
 <style scoped>
@@ -22,13 +22,14 @@ import SupportWidget from "@/UI/SupportWidget.vue"
   align-items: center;
   width: 100%;
   max-width: 100%;
-  padding: 20px;
+  padding: 5px;
   box-sizing: border-box;
   overflow-x: hidden;
 }
 
-.header_logo {
-  flex-shrink: 0; /* предотвращает сжатие логотипа */
+.logo {
+  width: 160px;
+  height: auto;
 }
 
 .header_center {
@@ -54,6 +55,7 @@ import SupportWidget from "@/UI/SupportWidget.vue"
 
   .header_logo {
     margin-bottom: 0;
+    display: none;
   }
 
   .header_center {
@@ -78,7 +80,7 @@ import SupportWidget from "@/UI/SupportWidget.vue"
   }
 
   .header_logo img {
-    max-height: 25px;
+    max-height: 124px;
   }
 }
 </style>
