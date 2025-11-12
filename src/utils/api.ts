@@ -2,7 +2,7 @@ import type { Excursion, ExcursionCreate, ExcursionUpdate, ExcursionFullInfo, Ex
 import type { LoginData, TokenResponse, User } from "@/types/user";
 import { cache } from "@/utils/cache";
 
-const API_BASE_URL = 'http://192.168.88.190:8000';
+const API_BASE_URL = 'http://192.168.0.108:8000';
 
 class Api {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -149,7 +149,7 @@ class Api {
       headers: {
         ...this.getAuthHeaders(),
       },
-      body: excursion,
+      body: JSON.stringify(excursion),
     });
 
     // Инвалидируем кеш после создания
@@ -163,7 +163,7 @@ class Api {
       headers: {
         ...this.getAuthHeaders(),
       },
-      body: excursion,
+      body: JSON.stringify(excursion),
     });
 
     // Инвалидируем кеш после обновления
@@ -260,7 +260,7 @@ class Api {
       headers: {
         ...this.getAuthHeaders(),
       },
-      body: details,
+      body: JSON.stringify(details),
     });
 
     // Инвалидируем кеш после создания деталей
@@ -275,7 +275,7 @@ class Api {
       headers: {
         ...this.getAuthHeaders(),
       },
-      body: details,
+      body: JSON.stringify(details),
     });
 
     // Инвалидируем кеш после обновления деталей
@@ -290,7 +290,7 @@ class Api {
       headers: {
         ...this.getAuthHeaders(),
       },
-      body: details,
+      body: JSON.stringify(details),
     });
 
     // Инвалидируем кеш после создания/обновления деталей
@@ -348,7 +348,7 @@ class Api {
     try {
       const user = await this.getCurrentUser();
       return user.is_superuser;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

@@ -190,15 +190,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { type Excursion, type ExcursionCreate } from '@/utils/api'
+import { ref, watch } from 'vue'
+import { type Excursion, type ExcursionCreate } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 
 interface Props {
   visible: boolean
   loading?: boolean
   editingCard?: Excursion | null
-  editingDetails?: any | null // Детальная информация для редактирования
+  editingDetails?: any | null
 }
 
 interface Emits {
@@ -324,7 +324,7 @@ watch(() => props.editingCard, (card) => {
       title: card.title,
       category: card.category,
       description: card.description,
-      date: formatDateForInput(card.date),
+      date: new Date(card.date),
       price: card.price,
       duration: card.duration,
       people_amount: card.people_amount,
@@ -404,7 +404,6 @@ const handleSubmit = () => {
   const submitData = {
     excursion: {
       ...formData.value,
-      date: new Date(formData.value.date),
       people_left: formData.value.people_amount,
     },
     details: cleanedDetails
@@ -419,11 +418,6 @@ const handleCancel = () => {
   emit('update:visible', false)
 }
 
-// Функция для форматирования даты в формат для input[type="datetime-local"]
-const formatDateForInput = (dateString: string | Date): string => {
-  const date = new Date(dateString)
-  return date.toISOString().slice(0, 16)
-}
 </script>
 
 <style scoped>

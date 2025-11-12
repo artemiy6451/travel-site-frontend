@@ -134,7 +134,8 @@
             <ul>
               <li>Всего мест: <strong>{{ selectedCard?.people_amount }}</strong></li>
               <li>Свободно мест: <strong>{{ selectedCard?.people_left }}</strong></li>
-              <li>После добавления: <strong>{{ (selectedCard?.people_left || 0) - additionalPeople }}</strong> свободных
+              <li>После добавления: <strong>{{ (selectedCard?.people_left || 0) -
+                additionalPeople }}</strong> свободных
                 мест</li>
             </ul>
           </div>
@@ -144,8 +145,12 @@
           <BaseButton variant="secondary" @click="closeAddPeopleDialog" :disabled="addPeopleLoading">
             Отмена
           </BaseButton>
-          <BaseButton variant="primary" @click="confirmAddPeople" :loading="addPeopleLoading" :disabled="!additionalPeople || additionalPeople == 0 || (selectedCard?.people_left -
-            additionalPeople) < 0">
+          <BaseButton
+            variant="primary"
+            @click="confirmAddPeople"
+            :loading="addPeopleLoading"
+            :disabled="!additionalPeople || additionalPeople == 0 || !selectedCard?.people_left || (selectedCard.people_left - additionalPeople) < 0"
+          >
             Добавить места
           </BaseButton>
         </div>
@@ -156,7 +161,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { type Excursion } from '@/utils/api'
+import { type Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
 
@@ -251,7 +256,7 @@ const closeAddPeopleDialog = () => {
 // Подтверждение добавления мест
 const confirmAddPeople = async () => {
   if (!selectedCard.value || !additionalPeople.value || additionalPeople.value == 0 ||
-    selectedCard.people_left - additionalPeople < 0) {
+    selectedCard.value.people_left - additionalPeople.value < 0) {
     return
   }
 

@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Excursion } from '@/utils/api'
+import type { Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
 

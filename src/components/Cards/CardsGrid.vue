@@ -47,7 +47,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { api, type Excursion } from '@/utils/api'
+import { api } from '@/utils/api'
+import type { Excursion } from "@/types/excursion"
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionCard from '@/components/Cards/ExcursionCard.vue'
@@ -127,7 +128,7 @@ const loadExcursions = async () => {
 }
 
 // Дебаунс для поиска (опционально)
-let searchTimeout: NodeJS.Timeout
+let searchTimeout = 0
 const handleSearchDebounced = (value: string) => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
@@ -198,12 +199,12 @@ const sortedAndFilteredCards = computed(() => {
   let result = excursions.value
 
   // Фильтруем только будущие экскурсии
-  result = result.filter(card => isFutureExcursion(card.date))
+  result = result.filter((card: Excursion) => isFutureExcursion(card.date))
 
   // Дополнительная фильтрация по поисковому запросу
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter(card =>
+    result = result.filter((card: Excursion) =>
       card.title.toLowerCase().includes(query) ||
       card.description.toLowerCase().includes(query)
     )

@@ -1,5 +1,6 @@
 // src/utils/auth.ts
-import { api, type User } from './api';
+import { api } from '@/utils/api';
+import { type User } from "@/types/user"
 
 export function isAuthenticated(): boolean {
   return !!localStorage.getItem('access_token');
@@ -38,6 +39,7 @@ export async function login(email: string, password: string): Promise<void> {
 
     // Сохраняем информацию о пользователе
     const user: User = {
+      id: tokenData.id || 0,
       email: email,
       is_superuser: tokenData.is_superuser || false
     };

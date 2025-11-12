@@ -69,14 +69,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import type { User } from '@/types/user'
+import { api } from '@/utils/api'
 import {
-  api,
   type Excursion,
   type ExcursionCreate,
-  type User,
   type ExcursionDetailsCreate,
   type ExcursionDetails
-} from '@/utils/api'
+} from "@/types/excursion"
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionForm from '@/components/Admin/ExcursionForm.vue'
 import ExcursionList from '@/components/Admin/ExcursionList.vue'
@@ -250,7 +250,7 @@ const addPeopleToExcursion = async (data: { id: number; additionalPeople: number
     const updatedCard = await api.addPeopleToExcursion(data.id, data.additionalPeople)
 
     // Обновляем карточку в локальном списке
-    const index = cards.value.findIndex(card => card.id === data.id)
+    const index = cards.value.findIndex((card: Excursion) => card.id === data.id)
     if (index !== -1) {
       cards.value[index] = updatedCard
     }
@@ -272,7 +272,7 @@ const toggleCardVisibility = async (id: number) => {
     const updatedCard = await api.toggleExcursionActive(id)
 
     // Обновляем карточку в локальном списке
-    const index = cards.value.findIndex(card => card.id === id)
+    const index = cards.value.findIndex((card: Excursion) => card.id === id)
     if (index !== -1) {
       cards.value[index] = updatedCard
     }

@@ -61,7 +61,7 @@
           <div v-if="hasRequirements(excursion)" class="requirements-section">
             <h2 class="section-title">🎯 Требования к участникам</h2>
             <div class="requirements-list">
-              <div v-for="(requirement, index) in excursion.details.requirements" :key="index" class="requirement-item">
+              <div v-for="(requirement, index) in excursion.details?.requirements" :key="index" class="requirement-item">
                 <span class="requirement-icon">✓</span>
                 <span class="requirement-text">{{ requirement }}</span>
               </div>
@@ -72,7 +72,7 @@
           <div v-if="hasRecommendations(excursion)" class="recommendations-section">
             <h2 class="section-title">💡 Рекомендации</h2>
             <div class="recommendations-list">
-              <div v-for="(recommendation, index) in excursion.details.recommendations" :key="index"
+              <div v-for="(recommendation, index) in excursion.details?.recommendations" :key="index"
                 class="recommendation-item">
                 <span class="recommendation-icon">💡</span>
                 <span class="recommendation-text">{{ recommendation }}</span>
@@ -110,7 +110,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api, type Excursion, type ExcursionFullInfo } from '@/utils/api'
+import { type ExcursionFullInfo } from '@/types/excursion'
+import { api } from '@/utils/api'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import DataState from '@/components/UI/DataState.vue'
 import ExcursionFacts from '@/components/Excursion/ExcursionFacts.vue'
@@ -121,7 +122,21 @@ import ExcursionItinerary from '@/components/Excursion/ExcursionItinerary.vue'
 const route = useRoute()
 const router = useRouter()
 
-const excursion = ref<ExcursionFullInfo | null>(null)
+const excursion = ref<ExcursionFullInfo>({
+  id: 0,
+  title: '',
+  category: '',
+  description: '',
+  date: new Date(),
+  price: 0,
+  duration: 0,
+  people_amount: 0,
+  people_left: 0,
+  is_active: true,
+  image_url: '',
+  details: undefined
+})
+
 const loading = ref(false)
 const error = ref('')
 
@@ -181,15 +196,8 @@ const getIncludedItems = (excursion: ExcursionFullInfo): string[] => {
 
   // Fallback базовые включения
   const baseItems = [
-    'Профессиональный гид',
-    'Трансфер от точки сбора',
-    'Страхование'
+    'Хорошее настроение',
   ]
-
-  if (excursion.duration > 240) baseItems.push('Питание')
-  if (excursion.category === 'горные') baseItems.push('Снаряжение')
-  if (excursion.category === 'морские') baseItems.push('Спасательные жилеты')
-
   return baseItems
 }
 

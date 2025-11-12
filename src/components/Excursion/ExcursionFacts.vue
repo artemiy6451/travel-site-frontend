@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Excursion } from '@/utils/api'
+import type { Excursion } from '@/types/excursion'
 
 interface Props {
   excursion: Excursion
