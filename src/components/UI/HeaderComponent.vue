@@ -1,7 +1,7 @@
 <template>
   <div class="header_container">
     <div class="header_logo">
-      <img src="@/assets/logo.png" alt="header logo" class="logo">
+      <img src="@/assets/logo.png" alt="header logo" class="logo" />
     </div>
 
     <div class="header_center">
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import SupportWidget from "@/components/UI/SupportWidget.vue"
+import SupportWidget from '@/components/UI/SupportWidget.vue'
 </script>
 
 <style scoped>

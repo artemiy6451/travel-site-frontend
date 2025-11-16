@@ -14,7 +14,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  title: 'О маршруте'
+  title: 'О маршруте',
 })
 </script>
 

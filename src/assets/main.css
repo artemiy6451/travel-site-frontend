@@ -3,14 +3,12 @@
 
 #app {
   min-height: 100vh;
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)),
-    url('@/assets/main.jpg?v=8');
+  background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('@/assets/main.jpg?v=8');
   background-size: cover; /* растягивает картинку на весь экран */
   background-position: center; /* центрирует картинку */
   background-repeat: no-repeat; /* предотвращает повторение */
   background-attachment: fixed; /* фиксирует фон при скролле */
-@media(max-width: 480px) {
+  @media (max-width: 480px) {
     background: #ebfcf0;
   }
 }
@@ -101,12 +99,22 @@ body {
 }
 
 /* Утилитарные классы */
-.text-center { text-align: center; }
-.text-left { text-align: left; }
-.text-right { text-align: right; }
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
 
-.flex { display: flex; }
-.flex-column { flex-direction: column; }
+.flex {
+  display: flex;
+}
+.flex-column {
+  flex-direction: column;
+}
 .flex-center {
   display: flex;
   align-items: center;
@@ -118,19 +126,45 @@ body {
   justify-content: space-between;
 }
 
-.grid { display: grid; }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-auto { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.grid {
+  display: grid;
+}
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-auto {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
 
-.gap-sm { gap: 10px; }
-.gap-md { gap: 20px; }
-.gap-lg { gap: 30px; }
+.gap-sm {
+  gap: 10px;
+}
+.gap-md {
+  gap: 20px;
+}
+.gap-lg {
+  gap: 30px;
+}
 
-.p-sm { padding: 10px; }
-.p-md { padding: 20px; }
-.p-lg { padding: 30px; }
+.p-sm {
+  padding: 10px;
+}
+.p-md {
+  padding: 20px;
+}
+.p-lg {
+  padding: 30px;
+}
 
-.m-sm { margin: 10px; }
-.m-md { margin: 20px; }
-.m-lg { margin: 30px; }
+.m-sm {
+  margin: 10px;
+}
+.m-md {
+  margin: 20px;
+}
+.m-lg {
+  margin: 30px;
+}

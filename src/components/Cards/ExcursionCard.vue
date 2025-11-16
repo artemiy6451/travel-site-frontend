@@ -47,6 +47,7 @@ import { computed } from 'vue'
 import type { Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
+import { handleImageError } from '@/utils/image'
 
 interface Props {
   excursion: Excursion
@@ -98,18 +99,13 @@ const formatDuration = (minutes: number): string => {
 
 const getCategoryName = (category: string): string => {
   const categories: { [key: string]: string } = {
-    'горные': 'Горные',
-    'морские': 'Морские',
-    'исторические': 'Исторические',
-    'природа': 'Природа',
-    'городские': 'Городские'
+    горные: 'Горные',
+    морские: 'Морские',
+    исторические: 'Исторические',
+    природа: 'Природа',
+    городские: 'Городские',
   }
   return categories[category] || category
-}
-
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement
-  target.src = 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?ixlib=rb-4.0.3&w=800&h=400&fit=crop'
 }
 </script>
 

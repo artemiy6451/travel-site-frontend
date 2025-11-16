@@ -1,9 +1,6 @@
 <template>
   <!-- Состояние загрузки -->
-  <LoadingState
-    v-if="loading"
-    :message="loadingMessage"
-  />
+  <LoadingState v-if="loading" :message="loadingMessage" />
 
   <!-- Состояние ошибки -->
   <ErrorState
@@ -42,7 +39,7 @@ withDefaults(defineProps<Props>(), {
   loading: false,
   loadingMessage: 'Загрузка...',
   showRetry: true,
-  retryText: 'Попробовать снова'
+  retryText: 'Попробовать снова',
 })
 
 defineEmits<Emits>()

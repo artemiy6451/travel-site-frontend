@@ -7,7 +7,7 @@
         :value="searchQuery"
         @input="handleSearchInput"
         class="search-input"
-      >
+      />
       <span class="search-icon">🔍</span>
     </div>
 
@@ -50,7 +50,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  searchPlaceholder: 'Поиск маршрутов...'
+  searchPlaceholder: 'Поиск маршрутов...',
 })
 
 const emit = defineEmits<Emits>()
@@ -76,7 +76,7 @@ const clearFilters = () => {
 
 // Экспортируем метод для использования в родительском компоненте
 defineExpose({
-  clearFilters
+  clearFilters,
 })
 </script>
 
@@ -106,7 +106,9 @@ defineExpose({
 
 .search-input:focus {
   border-color: var(--green-primary);
-  box-shadow: 0 0 0 3px var(--hover-green), 0 4px 15px var(--shadow-green-light);
+  box-shadow:
+    0 0 0 3px var(--hover-green),
+    0 4px 15px var(--shadow-green-light);
 }
 
 .search-icon {

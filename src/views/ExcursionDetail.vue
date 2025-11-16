@@ -3,24 +3,42 @@
     <!-- Хедер с навигацией -->
     <header class="modern-header">
       <nav class="nav-container">
-        <BaseButton variant="secondary" size="sm" @click="$router.back()" class="nav-back" icon="‹">
+        <BaseButton variant="secondary" size="sm" @click="handleBack" class="nav-back" icon="‹">
           Назад
         </BaseButton>
 
         <div class="nav-actions">
-          <BaseButton variant="secondary" size="sm" icon="📤" @click="handleShare" class="nav-btn" title="Поделиться" />
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            icon="📤"
+            @click="handleShare"
+            class="nav-btn"
+            title="Поделиться"
+          />
         </div>
       </nav>
     </header>
 
-    <DataState :loading="loading" :error="error" loading-message="Загружаем детали экскурсии..."
-      error-title="Что-то пошло не так" @retry="loadExcursion">
+    <DataState
+      :loading="loading"
+      :error="error"
+      loading-message="Загружаем детали экскурсии..."
+      error-title="Что-то пошло не так"
+      @retry="loadExcursion"
+      :showRetry="showRetry"
+    >
       <!-- Контент экскурсии -->
       <div v-if="excursion" class="modern-content">
         <!-- Hero секция -->
         <section class="hero-section">
           <div class="hero-image-container">
-            <img :src="excursion.image_url" :alt="excursion.title" class="hero-image" @error="handleImageError">
+            <img
+              :src="excursion.image_url"
+              :alt="excursion.title"
+              class="hero-image"
+              @error="handleImageError"
+            />
             <div class="image-overlay"></div>
             <div class="hero-badge">
               <span class="badge-text">{{ getCategoryName(excursion.category) }}</span>
@@ -61,7 +79,11 @@
           <div v-if="hasRequirements(excursion)" class="requirements-section">
             <h2 class="section-title">🎯 Требования к участникам</h2>
             <div class="requirements-list">
-              <div v-for="(requirement, index) in excursion.details?.requirements" :key="index" class="requirement-item">
+              <div
+                v-for="(requirement, index) in excursion.details?.requirements"
+                :key="index"
+                class="requirement-item"
+              >
                 <span class="requirement-icon">✓</span>
                 <span class="requirement-text">{{ requirement }}</span>
               </div>
@@ -72,8 +94,11 @@
           <div v-if="hasRecommendations(excursion)" class="recommendations-section">
             <h2 class="section-title">💡 Рекомендации</h2>
             <div class="recommendations-list">
-              <div v-for="(recommendation, index) in excursion.details?.recommendations" :key="index"
-                class="recommendation-item">
+              <div
+                v-for="(recommendation, index) in excursion.details?.recommendations"
+                :key="index"
+                class="recommendation-item"
+              >
                 <span class="recommendation-icon">💡</span>
                 <span class="recommendation-text">{{ recommendation }}</span>
               </div>
@@ -94,13 +119,18 @@
         <div v-if="excursion.people_left > 0" class="spots-left">
           Осталось {{ excursion.people_left }} мест
         </div>
-        <div v-else class="spots-left sold-out">
-          Мест нет
-        </div>
+        <div v-else class="spots-left sold-out">Мест нет</div>
       </div>
 
-      <BaseButton variant="primary" size="lg" @click="handleBooking" class="fab-button" icon="🎫" full-width
-        :disabled="excursion.people_left === 0">
+      <BaseButton
+        variant="primary"
+        size="lg"
+        @click="handleBooking"
+        class="fab-button"
+        icon="🎫"
+        full-width
+        :disabled="excursion.people_left === 0"
+      >
         {{ excursion.people_left > 0 ? 'Забронировать' : 'Мест нет' }}
       </BaseButton>
     </div>
@@ -110,8 +140,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { type ExcursionFullInfo } from '@/types/excursion'
 import { api } from '@/utils/api'
+import { handleImageError } from '@/utils/image'
+import { type ExcursionFullInfo } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import DataState from '@/components/UI/DataState.vue'
 import ExcursionFacts from '@/components/Excursion/ExcursionFacts.vue'
@@ -134,11 +165,12 @@ const excursion = ref<ExcursionFullInfo>({
   people_left: 0,
   is_active: true,
   image_url: '',
-  details: undefined
+  details: undefined,
 })
 
 const loading = ref(false)
 const error = ref('')
+const showRetry = ref(false)
 
 // Загрузка данных экскурсии
 const loadExcursion = async () => {
@@ -151,13 +183,15 @@ const loadExcursion = async () => {
 
   loading.value = true
   error.value = ''
+  showRetry.value = false
 
   try {
     // Используем новый метод для получения полной информации
     excursion.value = await api.getExcursionFull(excursionId)
   } catch (err: any) {
-    error.value = err.message || 'Не удалось загрузить экскурсию'
-    console.error('Error loading excursion:', err)
+    if (err.message === 'Excursion not found' || err.response?.status === 404) {
+      error.value = 'Экскурсия не найдена'
+    }
   } finally {
     loading.value = false
   }
@@ -171,15 +205,14 @@ const handleBooking = () => {
 
 // Дополнительные функции
 const handleShare = () => {
-  if (navigator.share) {
-    navigator.share({
-      title: excursion.value?.title,
-      text: excursion.value?.description,
-      url: window.location.href
-    })
+  navigator.clipboard.writeText(window.location.href)
+}
+
+const handleBack = () => {
+  if (window.history.length > 1) {
+    router.back()
   } else {
-    navigator.clipboard.writeText(window.location.href)
-    alert('Ссылка скопирована в буфер обмена!')
+    router.push('/')
   }
 }
 
@@ -195,9 +228,7 @@ const getIncludedItems = (excursion: ExcursionFullInfo): string[] => {
   }
 
   // Fallback базовые включения
-  const baseItems = [
-    'Хорошее настроение',
-  ]
+  const baseItems = ['Хорошее настроение']
   return baseItems
 }
 
@@ -211,16 +242,17 @@ const getItinerary = (excursion: ExcursionFullInfo): any[] => {
   const baseItinerary = [
     {
       title: 'Встреча группы',
-      description: 'Знакомство с гидом и участниками, инструктаж по технике безопасности'
+      description: 'Знакомство с гидом и участниками, инструктаж по технике безопасности',
     },
     {
       title: 'Начало маршрута',
-      description: 'Отправление по запланированному маршруту'
+      description: 'Отправление по запланированному маршруту',
     },
     {
       title: 'Завершение тура',
-      description: 'Возвращение к точке сбора, подведение итогов'
-    }]
+      description: 'Возвращение к точке сбора, подведение итогов',
+    },
+  ]
 
   return baseItinerary
 }
@@ -242,18 +274,13 @@ const formatPrice = (price: number): string => {
 
 const getCategoryName = (category: string): string => {
   const categories: { [key: string]: string } = {
-    'горные': 'Горные',
-    'морские': 'Морские',
-    'исторические': 'Исторические',
-    'природа': 'Природа',
-    'городские': 'Городские'
+    горные: 'Горные',
+    морские: 'Морские',
+    исторические: 'Исторические',
+    природа: 'Природа',
+    городские: 'Городские',
   }
   return categories[category] || category
-}
-
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement
-  target.src = 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?ixlib=rb-4.0.3&w=800&h=400&fit=crop'
 }
 
 // Загрузка при монтировании
@@ -266,7 +293,11 @@ onMounted(() => {
 .excursion-detail-modern {
   min-height: 100vh;
   background: #ffffff;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
 /* Хедер */
@@ -275,7 +306,6 @@ onMounted(() => {
   top: 0;
   z-index: 100;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
   border-bottom: 1px solid #f0f0f0;
 }
 

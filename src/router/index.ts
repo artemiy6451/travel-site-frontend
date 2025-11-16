@@ -4,6 +4,7 @@ import AdminPage from '@/views/AdminPage.vue'
 import LoginPage from '@/views/LoginPage.vue'
 import AcessDenied from '@/views/AccessDenied.vue'
 import ExcursionDetail from '@/views/ExcursionDetail.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 import { isAuthenticated, isSuperuser } from '@/utils/auth'
 
 const routes = [
@@ -16,42 +17,47 @@ const routes = [
     path: '/access-denied',
     name: 'AccessDenied',
     component: AcessDenied,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/excursion/:id',
     name: 'excursion-detail',
     component: ExcursionDetail,
-    props: true
+    props: true,
   },
   {
     path: '/admin',
     name: 'Admin',
     component: AdminPage,
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
     path: '/login',
     name: 'Login',
     component: LoginPage,
-  }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFoundView',
+    component: NotFoundView,
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
 
 router.beforeEach((to, _, next) => {
   if (to.meta.requiresAuth && !isAuthenticated()) {
-    next('/login');
+    next('/login')
   } else if (to.meta.requiresAdmin && !isSuperuser()) {
-    next('/access-denied');
+    next('/access-denied')
   } else if (to.path === '/login' && isAuthenticated()) {
-    next('/admin');
+    next('/admin')
   } else {
-    next();
+    next()
   }
-});
+})
 
 export default router

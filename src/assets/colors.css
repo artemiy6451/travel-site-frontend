@@ -1,18 +1,18 @@
 /* Зеленая цветовая палитра на основе C1DBB3 и 7EBC89 - только светлая тема */
 :root {
   /* Основные цвета */
-  --green-primary: #7EBC89;
-  --green-dark: #6AA678;
+  --green-primary: #7ebc89;
+  --green-dark: #6aa678;
   --green-darker: #569067;
-  --green-light: #C1DBB3;
-  --green-lighter: #D4E8C9;
-  --green-lightest: #E8F4DF;
+  --green-light: #c1dbb3;
+  --green-lighter: #d4e8c9;
+  --green-lightest: #e8f4df;
 
   /* Фоновые цвета */
-  --green-bg: #F8FBF6;
-  --green-bg-light: #F0F7EC;
-  --green-bg-lighter: #E8F4E2;
-  --white: #FFFFFF;
+  --green-bg: #f8fbf6;
+  --green-bg-light: #f0f7ec;
+  --green-bg-lighter: #e8f4e2;
+  --white: #ffffff;
 
   /* Градиенты */
   --gradient-green: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
@@ -21,10 +21,10 @@
   --gradient-green-soft: linear-gradient(135deg, var(--green-primary) 0%, var(--green-light) 100%);
 
   /* Текст */
-  --text-dark: #2D4A3E;
-  --text-medium: #4A6657;
+  --text-dark: #2d4a3e;
+  --text-medium: #4a6657;
   --text-light: #678275;
-  --text-white: #FFFFFF;
+  --text-white: #ffffff;
 
   /* Тени */
   --shadow-green: rgba(126, 188, 137, 0.3);
@@ -40,17 +40,17 @@
   --hover-green-light: rgba(193, 219, 179, 0.3);
 
   /* Бордеры */
-  --border-green: #E8F4E2;
-  --border-green-light: #F0F7EC;
+  --border-green: #e8f4e2;
+  --border-green-light: #f0f7ec;
   --border-green-strong: var(--green-light);
-  --border-green-medium: #D4E8C9;
-  --border-light: #E5E5E5;
+  --border-green-medium: #d4e8c9;
+  --border-light: #e5e5e5;
 }
 
 /* Дополнительные акцентные цвета */
 :root {
-  --accent-success: #27AE60;
-  --accent-warning: #F2C94C;
-  --accent-error: #EB5757;
-  --accent-info: #2F80ED;
+  --accent-success: #27ae60;
+  --accent-warning: #f2c94c;
+  --accent-error: #eb5757;
+  --accent-info: #2f80ed;
 }

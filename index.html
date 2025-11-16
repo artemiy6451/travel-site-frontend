@@ -1,15 +1,67 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="ru">
     <head>
         <meta charset="UTF-8">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Travel Site</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        
+        <!-- Основные мета-теги -->
+        <title>Вера и Виталий | Экскурсии по Крыму</title>
+        <meta name="description" content="TravelVV - ваш гид в мире путешествий. Уникальные экскурсии, групповые туры и индивидуальные маршруты. Горные походы, морские прогулки, исторические туры и приключения на природе.">
+        <meta name="keywords" content="туризм, экскурсии, путешествия, туры, отдых, приключения, горные походы, морские прогулки, исторические туры">
+        
+        <!-- Open Graph для социальных сетей -->
+        <meta property="og:title" content="TravelVV - Туристические экскурсии и путешествия">
+        <meta property="og:description" content="Откройте мир с TravelVV - уникальные экскурсии и незабываемые путешествия">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://travelvv.ru/">
+        <meta property="og:image" content="https://travelvv.ru/images/og-image.jpg">
+        
+        <!-- Дополнительные мета-теги -->
+        <meta name="author" content="TravelVV">
+        <meta name="robots" content="index, follow">
+        <meta name="theme-color" content="#F0F7EC">
+        
+        <!-- Canonical URL -->
+        <link rel="canonical" href="https://travelvv.ru/">
+        
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+        
+        <!-- Schema.org структурированные данные -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "TravelAgency",
+            "name": "TravelVV",
+            "description": "Туристическое агентство, предлагающее уникальные экскурсии и путешествия",
+            "url": "https://travelvv.ru",
+            "logo": "https://travelvv.ru/images/logo.png",
+            "telephone": "+7-978-700-58-62",
+            "sameAs": [
+                "https://vk.com/vvvectaa",
+                "https://t.me/vvvectaa"
+            ]
+        }
+        </script>
     </head>
     <body>
         <div id="app"></div>
         <script type="module" src="/src/main.ts"></script>
+        
+        <!-- Noscript для пользователей без JavaScript -->
+        <noscript>
+            <div style="text-align: center; padding: 50px; font-family: Montserrat, sans-serif;">
+                <h1>TravelVV - Туристические экскурсии</h1>
+                <p>Для полноценной работы сайта требуется JavaScript. Пожалуйста, включите JavaScript в настройках вашего браузера.</p>
+                <p>Или свяжитесь с нами:</p>
+                <p>Телефон: +7-978-700-58-62</p>
+            </div>
+        </noscript>
     </body>
 </html>

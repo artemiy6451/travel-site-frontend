@@ -1,10 +1,5 @@
 <template>
-  <button
-    :class="buttonClasses"
-    :disabled="disabled || loading"
-    :type="type"
-    @click="handleClick"
-  >
+  <button :class="buttonClasses" :disabled="disabled || loading" :type="type" @click="handleClick">
     <!-- Состояние загрузки -->
     <div v-if="loading" class="button-loading">
       <div class="button-spinner"></div>
@@ -51,7 +46,7 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'button',
   loading: false,
   disabled: false,
-  fullWidth: false
+  fullWidth: false,
 })
 
 const slots = useSlots()
@@ -62,12 +57,15 @@ const emit = defineEmits<{
 // Проверяем есть ли текстовый контент
 const hasTextContent = computed(() => {
   const defaultSlot = slots.default?.()
-  return defaultSlot && defaultSlot.some(node => {
-    if (typeof node.children === 'string') {
-      return node.children.trim().length > 0
-    }
-    return false
-  })
+  return (
+    defaultSlot &&
+    defaultSlot.some((node) => {
+      if (typeof node.children === 'string') {
+        return node.children.trim().length > 0
+      }
+      return false
+    })
+  )
 })
 
 // Проверяем является ли кнопка только с иконкой
@@ -89,12 +87,12 @@ const buttonClasses = computed(() => [
   `variant-${props.variant}`,
   `size-${props.size}`,
   {
-    'loading': props.loading,
-    'disabled': props.disabled,
+    loading: props.loading,
+    disabled: props.disabled,
     'full-width': props.fullWidth,
     'has-icon': props.icon || !!slots.icon,
-    'icon-only': isIconOnly.value
-  }
+    'icon-only': isIconOnly.value,
+  },
 ])
 </script>
 
@@ -287,8 +285,12 @@ const buttonClasses = computed(() => [
 
 /* Анимации */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Адаптивность */

@@ -7,23 +7,11 @@
         <p>У вас недостаточно прав для доступа к этой странице.</p>
         <p class="subtext">Требуются права администратора.</p>
         <div class="actions">
-          <BaseButton
-            @click="goToLogin"
-            variant="primary"
-            size="lg"
-            full-width
-            class="action-btn"
-          >
+          <BaseButton @click="goToLogin" variant="primary" size="lg" full-width class="action-btn">
             Войти под другим пользователем
           </BaseButton>
 
-          <BaseButton
-            @click="goBack"
-            variant="secondary"
-            size="lg"
-            full-width
-            class="action-btn"
-          >
+          <BaseButton @click="goBack" variant="secondary" size="lg" full-width class="action-btn">
             Назад
           </BaseButton>
         </div>
@@ -33,19 +21,19 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { logout } from '@/utils/auth';
-import BaseButton from '@/components/UI/BaseButton.vue'; // Убедитесь что путь правильный
+import { useRouter } from 'vue-router'
+import { logout } from '@/utils/auth'
+import BaseButton from '@/components/UI/BaseButton.vue' // Убедитесь что путь правильный
 
-const router = useRouter();
+const router = useRouter()
 
 const goToLogin = () => {
-  logout();
-};
+  logout()
+}
 
 const goBack = () => {
-  router.back();
-};
+  router.back()
+}
 </script>
 
 <style scoped>

@@ -1,5 +1,5 @@
 <template>
-<div class="home-page">
+  <div class="home-page">
     <HeaderComponent />
     <main class="main-content">
       <CardsGrid />

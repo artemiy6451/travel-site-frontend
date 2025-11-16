@@ -1,26 +1,14 @@
 <template>
   <div class="cards-list">
     <!-- Статистика -->
-    <div class="stats">
-      <div class="stat-item">
-        <span class="stat-number">{{ totalCards }}</span>
-        <span class="stat-label">Всего экскурсий</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{{ activeCards }}</span>
-        <span class="stat-label">Активных</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{{ hiddenCards }}</span>
-        <span class="stat-label">Скрытых</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{{ totalAvailableSpots }}</span>
-        <span class="stat-label">Всего мест доступно</span>
-      </div>
-    </div>
+    <StatsComponent
+      :total="stats.total"
+      :active="stats.active"
+      :hidden="stats.hidden"
+      :total-spots="stats.totalSpots"
+    />
 
-    <!-- Таблица -->
+    <!-- Остальной код остается без изменений -->
     <div class="table-container">
       <table class="cards-table">
         <thead>
@@ -37,32 +25,48 @@
         </thead>
         <tbody>
           <tr v-for="card in cards" :key="card.id" :class="{ 'hidden-card': !card.is_active }">
-            <td>
+            <!-- Строка 1: Фото -->
+            <td class="image-cell">
               <div class="card-image-preview">
-                <img :src="card.image_url" :alt="card.title" @error="handleImageError">
+                <img :src="card.image_url" :alt="card.title" @error="handleImageError" />
               </div>
             </td>
-            <td class="card-title-cell">
-              <strong>{{ card.title }}</strong>
-              <p class="card-description-preview">{{ card.description }}</p>
+
+            <!-- Строка 2: Описание -->
+            <td class="title-cell">
+              <strong class="card-title">{{ card.title }}</strong>
+              <p class="card-description">{{ card.description }}</p>
             </td>
-            <td>
+
+            <!-- Строка 3: Категория -->
+            <td class="category-cell">
               <span class="category-badge" :class="card.category">
                 {{ getCategoryName(card.category) }}
               </span>
             </td>
-            <td class="card-date">
+
+            <!-- Строка 3: Дата -->
+            <td class="date-cell">
               <div class="date-container">
-                <ExcursionDeparture :date="card.date" class="departure-component" />
+                <ExcursionDeparture :date="card.date" />
               </div>
             </td>
-            <td class="card-price">{{ card.price }} ₽</td>
-            <td class="card-people">
+
+            <!-- Строка 3: Цена -->
+            <td class="price-cell">
+              <span class="card-price">{{ card.price }} ₽</span>
+            </td>
+
+            <!-- Строка 3: Места -->
+            <td class="people-cell">
               <div class="people-info">
                 <div class="people-progress">
                   <div class="progress-bar">
-                    <div class="progress-fill" :class="getProgressClass(card)"
-                      :style="{ width: getProgressPercentage(card) + '%' }"></div>
+                    <div
+                      class="progress-fill"
+                      :class="getProgressClass(card)"
+                      :style="{ width: getProgressPercentage(card) + '%' }"
+                    ></div>
                   </div>
                   <div class="people-numbers">
                     <span class="people-left">{{ card.people_left }}</span>
@@ -75,25 +79,53 @@
                 </div>
               </div>
             </td>
-            <td>
-              <span class="status-badge" :class="{ active: card.is_active, hidden: !card.is_active }">
+
+            <!-- Строка 4: Статус -->
+            <td class="status-cell">
+              <span
+                class="status-badge"
+                :class="{ active: card.is_active, hidden: !card.is_active }"
+              >
                 {{ card.is_active ? 'Активна' : 'Скрыта' }}
               </span>
             </td>
-            <td class="actions">
-              <!-- Кнопка добавления мест -->
-              <BaseButton variant="primary" size="sm" icon="➕" @click="openAddPeopleDialog(card)" title="Добавить людей"
-                :disabled="loading" />
 
-              <BaseButton :variant="card.is_active ? 'warning' : 'success'" size="sm"
-                :icon="card.is_active ? '👁️' : '👁️‍🗨️'" @click="emit('toggle-visibility', card.id)"
-                :title="card.is_active ? 'Скрыть' : 'Показать'" :disabled="loading" />
-
-              <BaseButton variant="info" size="sm" icon="✏️" @click="emit('edit', card)" title="Редактировать"
-                :disabled="loading" />
-
-              <BaseButton variant="danger" size="sm" icon="🗑️" :loading="loading" @click="emit('delete', card.id)"
-                title="Удалить" />
+            <!-- Строка 5: Кнопки -->
+            <td class="actions-cell">
+              <div class="actions">
+                <BaseButton
+                  variant="primary"
+                  size="sm"
+                  icon="➕"
+                  @click="openAddPeopleDialog(card)"
+                  title="Добавить людей"
+                  :disabled="loading"
+                />
+                <BaseButton
+                  :variant="card.is_active ? 'warning' : 'success'"
+                  size="sm"
+                  :icon="card.is_active ? '👁️' : '👁️‍🗨️'"
+                  @click="emit('toggle-visibility', card.id)"
+                  :title="card.is_active ? 'Скрыть' : 'Показать'"
+                  :disabled="loading"
+                />
+                <BaseButton
+                  variant="info"
+                  size="sm"
+                  icon="✏️"
+                  @click="emit('edit', card)"
+                  title="Редактировать"
+                  :disabled="loading"
+                />
+                <BaseButton
+                  variant="danger"
+                  size="sm"
+                  icon="🗑️"
+                  :loading="loading"
+                  @click="emit('delete', card.id)"
+                  title="Удалить"
+                />
+              </div>
             </td>
           </tr>
         </tbody>
@@ -101,69 +133,38 @@
 
       <!-- Состояние загрузки -->
       <div v-if="loading" class="loading-state">
-        Загрузка экскурсий...
+        <div class="loading-spinner"></div>
+        <span>Загрузка экскурсий...</span>
       </div>
 
       <!-- Пустое состояние -->
       <div v-else-if="cards.length === 0" class="empty-state">
-        Экскурсии не найдены
+        <div class="empty-icon">📝</div>
+        <h3>Экскурсии не найдены</h3>
+        <p>Создайте первую экскурсию или измените параметры фильтрации</p>
       </div>
     </div>
 
     <!-- Диалог добавления мест -->
-    <div v-if="showAddPeopleDialog" class="dialog-overlay">
-      <div class="dialog-container">
-        <div class="dialog-header">
-          <h3>Добавить людей</h3>
-          <button class="dialog-close" @click="closeAddPeopleDialog">×</button>
-        </div>
-
-        <div class="dialog-content">
-          <p class="dialog-description">
-            Добавить людей на экскурсию <strong>"{{ selectedCard?.title }}"</strong>
-          </p>
-
-          <div class="form-group">
-            <label for="additional-people">Количество человек:</label>
-            <input id="additional-people" v-model.number="additionalPeople" type="number" min="1" max="100"
-              placeholder="Введите количество" class="number-input" @keyup.enter="confirmAddPeople" />
-          </div>
-
-          <div class="current-info">
-            <p>Текущее состояние:</p>
-            <ul>
-              <li>Всего мест: <strong>{{ selectedCard?.people_amount }}</strong></li>
-              <li>Свободно мест: <strong>{{ selectedCard?.people_left }}</strong></li>
-              <li>После добавления: <strong>{{ (selectedCard?.people_left || 0) -
-                additionalPeople }}</strong> свободных
-                мест</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="dialog-actions">
-          <BaseButton variant="secondary" @click="closeAddPeopleDialog" :disabled="addPeopleLoading">
-            Отмена
-          </BaseButton>
-          <BaseButton
-            variant="primary"
-            @click="confirmAddPeople"
-            :loading="addPeopleLoading"
-            :disabled="!additionalPeople || additionalPeople == 0 || !selectedCard?.people_left || (selectedCard.people_left - additionalPeople) < 0"
-          >
-            Добавить места
-          </BaseButton>
-        </div>
-      </div>
-    </div>
+    <AddPeopleDialog
+      :visible="showAddPeopleDialog"
+      :card="selectedCard"
+      :loading="addPeopleLoading"
+      @update:visible="showAddPeopleDialog = $event"
+      @confirm="handleAddPeopleConfirm"
+      @close="handleDialogClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, watchEffect } from 'vue'
+import { handleImageError } from '@/utils/image'
 import { type Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
+import StatsComponent from '@/components/UI/StatsComponent.vue'
+import AddPeopleDialog from '@/components/Admin/AddPeopleDialog.vue'
 
 interface Props {
   cards: Excursion[]
@@ -178,7 +179,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false
+  loading: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -186,25 +187,34 @@ const emit = defineEmits<Emits>()
 // Диалог добавления мест
 const showAddPeopleDialog = ref(false)
 const selectedCard = ref<Excursion | null>(null)
-const additionalPeople = ref(1)
 const addPeopleLoading = ref(false)
 
 // Статистика
-const totalCards = computed(() => props.cards.length)
-const activeCards = computed(() => props.cards.filter(card => card.is_active).length)
-const hiddenCards = computed(() => props.cards.filter(card => !card.is_active).length)
-const totalAvailableSpots = computed(() =>
-  props.cards.reduce((total, card) => total + card.people_left, 0)
-)
+const stats = ref({
+  total: 0,
+  active: 0,
+  hidden: 0,
+  totalSpots: 0,
+})
+
+watchEffect(() => {
+  const cards = props.cards
+  stats.value = {
+    total: cards.length,
+    active: cards.filter((card) => card.is_active).length,
+    hidden: cards.filter((card) => !card.is_active).length,
+    totalSpots: cards.reduce((total, card) => total + card.people_left, 0),
+  }
+})
 
 // Получение названия категории
 const getCategoryName = (category: string) => {
   const categories: { [key: string]: string } = {
-    'горные': 'Горные',
-    'морские': 'Морские',
-    'исторические': 'Исторические',
-    'природа': 'Природа',
-    'городские': 'Городские'
+    горные: 'Горные',
+    морские: 'Морские',
+    исторические: 'Исторические',
+    природа: 'Природа',
+    городские: 'Городские',
   }
   return categories[category] || category
 }
@@ -241,32 +251,15 @@ const getPeopleStatusText = (card: Excursion) => {
 // Открытие диалога добавления мест
 const openAddPeopleDialog = (card: Excursion) => {
   selectedCard.value = card
-  additionalPeople.value = 1
   showAddPeopleDialog.value = true
 }
 
-// Закрытие диалога
-const closeAddPeopleDialog = () => {
-  showAddPeopleDialog.value = false
-  selectedCard.value = null
-  additionalPeople.value = 1
-  addPeopleLoading.value = false
-}
-
-// Подтверждение добавления мест
-const confirmAddPeople = async () => {
-  if (!selectedCard.value || !additionalPeople.value || additionalPeople.value == 0 ||
-    selectedCard.value.people_left - additionalPeople.value < 0) {
-    return
-  }
-
+// Обработка подтверждения из диалога
+const handleAddPeopleConfirm = (data: { id: number; additionalPeople: number }) => {
   addPeopleLoading.value = true
   try {
-    emit('add-people', {
-      id: selectedCard.value.id,
-      additionalPeople: additionalPeople.value
-    })
-    closeAddPeopleDialog()
+    emit('add-people', data)
+    showAddPeopleDialog.value = false
   } catch (error) {
     console.error('Error adding people:', error)
   } finally {
@@ -274,19 +267,18 @@ const confirmAddPeople = async () => {
   }
 }
 
-// Обработчик ошибки загрузки изображения
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement
-  target.src = ''
+// Обработка закрытия диалога
+const handleDialogClose = () => {
+  selectedCard.value = null
 }
 </script>
 
 <style scoped>
-/* Стили остаются такими же как в предыдущем ответе */
 .cards-list {
   margin-top: 20px;
 }
 
+/* Статистика */
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -301,6 +293,11 @@ const handleImageError = (event: Event) => {
   text-align: center;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-green-light);
+  transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
 }
 
 .stat-number {
@@ -316,6 +313,7 @@ const handleImageError = (event: Event) => {
   font-size: 0.9rem;
 }
 
+/* Таблица */
 .table-container {
   background: white;
   border-radius: 15px;
@@ -342,6 +340,7 @@ const handleImageError = (event: Event) => {
 .cards-table td {
   padding: 15px;
   border-bottom: 1px solid var(--border-green-light);
+  vertical-align: middle;
 }
 
 .cards-table tr.hidden-card {
@@ -357,6 +356,7 @@ const handleImageError = (event: Event) => {
   border-bottom: none;
 }
 
+/* Ячейки таблицы */
 .card-image-preview {
   width: 60px;
   height: 40px;
@@ -370,13 +370,14 @@ const handleImageError = (event: Event) => {
   object-fit: cover;
 }
 
-.card-title-cell strong {
+.card-title {
   color: var(--text-dark);
   display: block;
   margin-bottom: 5px;
+  font-size: 0.95rem;
 }
 
-.card-description-preview {
+.card-description {
   color: var(--text-light);
   font-size: 0.8rem;
   margin: 0;
@@ -395,12 +396,6 @@ const handleImageError = (event: Event) => {
   color: var(--green-dark);
 }
 
-.card-date {
-  font-size: 0.9rem;
-  color: var(--text-medium);
-  white-space: nowrap;
-}
-
 .date-container {
   display: flex;
   flex-direction: column;
@@ -410,10 +405,7 @@ const handleImageError = (event: Event) => {
 .card-price {
   font-weight: 600;
   color: var(--green-dark);
-}
-
-.card-people {
-  min-width: 120px;
+  font-size: 0.95rem;
 }
 
 .people-info {
@@ -519,104 +511,55 @@ const handleImageError = (event: Event) => {
 .actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
+/* Состояния загрузки и пустого состояния */
 .loading-state {
-  padding: 40px;
+  padding: 40px 20px;
   text-align: center;
-  font-style: italic;
-  color: #666;
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--green-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .empty-state {
-  padding: 40px;
+  padding: 50px 20px;
   text-align: center;
-  color: #666;
-  font-style: italic;
-}
-
-/* Стили для диалога добавления мест */
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.dialog-container {
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 25px;
-  border-bottom: 1px solid var(--border-green-light);
-}
-
-.dialog-header h3 {
-  margin: 0;
-  color: var(--text-dark);
-}
-
-.dialog-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
   color: var(--text-light);
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
 }
 
-.dialog-close:hover {
-  background: #f8f9fa;
-  color: var(--text-dark);
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
 }
 
-.dialog-content {
-  padding: 25px;
-}
-
-.dialog-description {
-  margin-bottom: 20px;
+.empty-state h3 {
+  margin: 0 0 8px 0;
   color: var(--text-medium);
-  line-height: 1.5;
+  font-size: 1.2rem;
 }
 
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--text-dark);
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 .number-input {
   width: 100%;
-  padding: 12px;
+  padding: 12px 16px;
   border: 2px solid var(--border-turquoise);
   border-radius: 8px;
   font-size: 1rem;
@@ -632,15 +575,16 @@ const handleImageError = (event: Event) => {
 
 .current-info {
   background: #f8f9fa;
-  padding: 15px;
+  padding: 16px;
   border-radius: 8px;
   border-left: 4px solid var(--green-primary);
 }
 
 .current-info p {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-weight: 600;
   color: var(--text-dark);
+  font-size: 0.9rem;
 }
 
 .current-info ul {
@@ -649,78 +593,429 @@ const handleImageError = (event: Event) => {
 }
 
 .current-info li {
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   color: var(--text-medium);
+  font-size: 0.9rem;
 }
 
 .dialog-actions {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   justify-content: flex-end;
-  padding: 20px 25px;
+  padding: 20px 24px;
   border-top: 1px solid var(--border-green-light);
 }
 
+/* Анимации */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 /* Адаптивность */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .stats {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-item {
+    padding: 16px;
+  }
+
+  .stat-number {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 968px) {
+  .table-container {
+    display: block;
+    overflow-x: visible;
+  }
+
+  .cards-table {
+    min-width: auto;
+    display: block;
+  }
+
+  .cards-table thead {
+    display: none;
+  }
+
+  .cards-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .cards-table tr {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-green-light);
+    overflow: hidden;
+  }
+
+  .cards-table td {
+    display: flex;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-green-light);
+    align-items: center;
+  }
+
+  .cards-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Строка 1: Фото */
+  .image-cell {
+    padding: 0 !important;
+    border-bottom: none;
+    justify-content: center;
+  }
+
+  .card-image-preview {
+    width: 100%;
+    height: 160px;
+    border-radius: 0;
+  }
+
+  /* Строка 2: Описание */
+  .title-cell {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    text-align: center;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+  }
+
+  .card-description {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    max-width: none;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--text-medium);
+  }
+
+  /* Строка 3: Вся информация в одной строке */
+  .category-cell,
+  .date-cell,
+  .price-cell,
+  .people-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-bottom: none;
+    flex-wrap: wrap;
+  }
+
+  /* Строка 4: Статус */
+  .status-cell {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-green-light);
+    justify-content: center;
+  }
+
+  /* Строка 5: Кнопки действий */
+  .actions-cell {
+    padding: 16px;
+    justify-content: center;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .actions :deep(.base-button) {
+    flex: 1;
+    min-width: 60px;
+    max-width: 80px;
+    min-height: 40px;
   }
 }
 
 @media (max-width: 768px) {
   .stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .cards-table {
-    min-width: 900px;
-  }
-
-  .actions {
-    flex-direction: column;
-  }
-
-  .date-container {
-    gap: 4px;
-  }
-
-  .card-people {
-    min-width: 100px;
-  }
-
-  .dialog-container {
-    margin: 20px;
-  }
-
-  .dialog-actions {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
   .stat-item {
-    padding: 15px;
+    padding: 14px;
   }
 
   .stat-number {
     font-size: 1.5rem;
   }
 
-  .people-info {
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .cards-table tr {
+    border-radius: 10px;
+  }
+
+  .card-image-preview {
+    height: 140px;
+  }
+
+  .category-cell,
+  .date-cell,
+  .price-cell,
+  .people-cell {
+    gap: 12px;
+    padding: 10px 16px;
+  }
+
+  .actions :deep(.base-button) {
+    min-width: 55px;
+    max-width: 70px;
+    min-height: 38px;
+    font-size: 0.85rem;
+  }
+
+  .dialog-container {
+    margin: 10px;
+    max-height: 95vh;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+  }
+
+  .dialog-actions :deep(.base-button) {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards-list {
+    margin-top: 15px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .stat-item {
+    padding: 12px;
+  }
+
+  .stat-number {
+    font-size: 1.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
+  .cards-table tr {
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .card-image-preview {
+    height: 120px;
+  }
+
+  .card-title {
+    font-size: 1rem;
+  }
+
+  .card-description {
+    font-size: 0.85rem;
+  }
+
+  .category-cell,
+  .date-cell,
+  .price-cell,
+  .people-cell {
+    gap: 10px;
+    padding: 8px 12px;
+  }
+
+  .category-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+  }
+
+  .actions {
     gap: 6px;
+  }
+
+  .actions :deep(.base-button) {
+    min-width: 50px;
+    max-width: 65px;
+    min-height: 36px;
+    font-size: 0.8rem;
+  }
+
+  .dialog-header {
+    padding: 16px 20px;
+  }
+
+  .dialog-content {
+    padding: 20px;
+  }
+
+  .dialog-header h3 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .stat-item {
+    padding: 10px;
+  }
+
+  .stat-number {
+    font-size: 1.3rem;
+  }
+
+  .cards-table tr {
+    margin-bottom: 10px;
+  }
+
+  .card-image-preview {
+    height: 100px;
+  }
+
+  .category-cell,
+  .date-cell,
+  .price-cell,
+  .people-cell {
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .actions {
+    gap: 4px;
+  }
+
+  .actions :deep(.base-button) {
+    min-width: 45px;
+    max-width: 55px;
+    min-height: 34px;
+    font-size: 0.75rem;
+    padding: 6px 4px;
+  }
+}
+
+/* Ховер эффекты для десктопа */
+@media (hover: hover) and (pointer: fine) {
+  .cards-table tr:not(.hidden-card):hover {
+    background-color: var(--green-bg-light);
+  }
+}
+
+/* Особые стили для горизонтальной ориентации на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .card-image-preview {
+    height: 100px;
+  }
+
+  .category-cell,
+  .date-cell,
+  .price-cell,
+  .people-cell {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 320px) {
+  .stats {
+    gap: 6px;
+  }
+
+  .stat-item {
+    padding: 8px;
+  }
+
+  .stat-number {
+    font-size: 1.2rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .cards-table tr {
+    margin-bottom: 8px;
+  }
+
+  .card-image-preview {
+    height: 90px;
+  }
+
+  .category-cell,
+  .date-cell,
+  .price-cell,
+  .people-cell {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .actions :deep(.base-button) {
+    min-width: 40px;
+    max-width: 50px;
+    min-height: 32px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Улучшения для прогресс-бара на мобильных */
+@media (max-width: 968px) {
+  .people-info {
+    align-items: center;
+  }
+
+  .people-progress {
+    width: 100%;
+    max-width: 120px;
+  }
+
+  .progress-bar {
+    height: 4px;
   }
 
   .people-numbers {
     font-size: 0.75rem;
-  }
-
-  .people-status {
-    font-size: 0.7rem;
   }
 }
 </style>

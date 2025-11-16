@@ -28,7 +28,7 @@ interface Emits {
 
 withDefaults(defineProps<Props>(), {
   showRetry: true,
-  retryText: 'Попробовать снова'
+  retryText: 'Попробовать снова',
 })
 
 defineEmits<Emits>()

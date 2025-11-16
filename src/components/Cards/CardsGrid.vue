@@ -36,7 +36,11 @@
         <!-- Состояние когда нет результатов -->
         <div v-else class="no-results">
           <p>На ближайшее время экскурсий не запланировано</p>
-          <BaseButton v-if="activeFilter !== 'all' || searchQuery" variant="secondary" @click="clearFilters">
+          <BaseButton
+            v-if="activeFilter !== 'all' || searchQuery"
+            variant="secondary"
+            @click="clearFilters"
+          >
             Очистить фильтры
           </BaseButton>
         </div>
@@ -48,7 +52,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/utils/api'
-import type { Excursion } from "@/types/excursion"
+import type { Excursion } from '@/types/excursion'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionCard from '@/components/Cards/ExcursionCard.vue'
@@ -82,7 +86,7 @@ const filters = ref<Filter[]>([
   { id: 'морские', name: 'Морские' },
   { id: 'исторические', name: 'Исторические' },
   { id: 'природа', name: 'Природа' },
-  { id: 'городские', name: 'Городские' }
+  { id: 'городские', name: 'Городские' },
 ])
 
 const activeFilter = ref<string>('all')
@@ -117,7 +121,7 @@ const loadExcursions = async () => {
     const response = await api.getExcursions()
     // Фильтруем активные экскурсии и сортируем по дате
     excursions.value = response
-      .filter(excursion => excursion.is_active)
+      .filter((excursion) => excursion.is_active)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   } catch (err: any) {
     error.value = err.message || 'Не удалось загрузить экскурсии'
@@ -142,7 +146,7 @@ const handleSearchExecution = async (value: string) => {
     try {
       const results = await api.searchExcursions(value)
       excursions.value = results
-        .filter(excursion => excursion.is_active)
+        .filter((excursion) => excursion.is_active)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     } catch (err: any) {
       error.value = err.message || 'Ошибка поиска'
@@ -167,7 +171,7 @@ const setActiveFilter = async (filterId: string) => {
     try {
       const results = await api.getExcursionsByCategory(filterId)
       excursions.value = results
-        .filter(excursion => excursion.is_active)
+        .filter((excursion) => excursion.is_active)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     } catch (err: any) {
       error.value = err.message || 'Ошибка фильтрации'
@@ -204,9 +208,9 @@ const sortedAndFilteredCards = computed(() => {
   // Дополнительная фильтрация по поисковому запросу
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter((card: Excursion) =>
-      card.title.toLowerCase().includes(query) ||
-      card.description.toLowerCase().includes(query)
+    result = result.filter(
+      (card: Excursion) =>
+        card.title.toLowerCase().includes(query) || card.description.toLowerCase().includes(query),
     )
   }
 
@@ -276,7 +280,7 @@ onMounted(() => {
   }
 }
 
-@media(max-width: 480px) {
+@media (max-width: 480px) {
   .section-title {
     color: var(--text-dark);
   }

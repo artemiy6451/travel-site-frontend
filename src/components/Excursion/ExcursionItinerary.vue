@@ -27,7 +27,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   title: 'Программа тура',
-  itinerary: () => []
+  itinerary: () => [],
 })
 </script>
 

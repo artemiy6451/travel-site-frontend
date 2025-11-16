@@ -52,8 +52,7 @@ interface Props {
   excursion: Excursion
 }
 
-withDefaults(defineProps<Props>(), {
-})
+withDefaults(defineProps<Props>(), {})
 
 // Получение класса статуса мест
 const getPeopleStatusClass = (excursion: Excursion) => {
@@ -90,7 +89,7 @@ const formatDate = (dateString: string | Date): string => {
     month: 'long',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 </script>
@@ -126,7 +125,7 @@ const formatDate = (dateString: string | Date): string => {
 
 .fact-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .fact-icon {
@@ -138,7 +137,7 @@ const formatDate = (dateString: string | Date): string => {
   justify-content: center;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .fact-content {

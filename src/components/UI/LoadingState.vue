@@ -11,7 +11,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  message: 'Загрузка...'
+  message: 'Загрузка...',
 })
 </script>
 
@@ -42,7 +42,11 @@ withDefaults(defineProps<Props>(), {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

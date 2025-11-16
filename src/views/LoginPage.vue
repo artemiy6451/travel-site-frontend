@@ -9,15 +9,27 @@
         <form @submit.prevent="handleLogin" class="login-form">
           <div class="form-group">
             <label for="email">Email</label>
-            <input id="email" v-model="form.email" type="email" placeholder="admin@example.com" required
-              :class="{ error: errors.email }">
+            <input
+              id="email"
+              v-model="form.email"
+              type="email"
+              placeholder="admin@example.com"
+              required
+              :class="{ error: errors.email }"
+            />
             <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
           </div>
 
           <div class="form-group">
             <label for="password">Пароль</label>
-            <input id="password" v-model="form.password" type="password" placeholder="Введите пароль" required
-              :class="{ error: errors.password }">
+            <input
+              id="password"
+              v-model="form.password"
+              type="password"
+              placeholder="Введите пароль"
+              required
+              :class="{ error: errors.password }"
+            />
             <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
           </div>
 
@@ -58,7 +70,7 @@ const router = useRouter()
 
 const form = reactive<LoginForm>({
   email: '',
-  password: ''
+  password: '',
 })
 
 const errors = reactive<FormErrors>({})
@@ -90,22 +102,21 @@ const validateForm = (): boolean => {
 }
 
 const handleLogin = async () => {
-  if (!validateForm()) return;
+  if (!validateForm()) return
 
-  loading.value = true;
-  error.value = '';
+  loading.value = true
+  error.value = ''
 
   try {
-    await login(form.email, form.password);
+    await login(form.email, form.password)
 
-    router.push('/admin');
+    router.push('/admin')
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Ошибка при входе. Попробуйте снова.';
+    error.value = err instanceof Error ? err.message : 'Ошибка при входе. Попробуйте снова.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
-
+}
 </script>
 
 <style scoped>

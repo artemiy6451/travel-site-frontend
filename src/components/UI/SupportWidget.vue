@@ -1,27 +1,21 @@
 <template>
   <div class="support-bar">
     <div class="header_logo">
-      <img src="@/assets/logo.png" alt="header logo" class="logo">
+      <img src="@/assets/logo.png" alt="header logo" class="logo" />
     </div>
 
     <div class="support_info">
       <span class="support-time">🕒 09:00–21:00 МСК</span>
       <a href="tel:+79787005862" class="support-link">📞 +7 (978) 700-58-62</a>
       <div class="buttons">
-        <a href="https://vk.com/vvvectaa" target="_blank" class="btn vk">
-          ВКонтакте
-        </a>
-        <a href="https://t.me/vvvectaa" target="_blank" class="btn telegram">
-          Telegram
-        </a>
+        <a href="https://vk.com/vvvectaa" target="_blank" class="btn vk"> ВКонтакте </a>
+        <a href="https://t.me/vvvectaa" target="_blank" class="btn telegram"> Telegram </a>
       </div>
     </div>
-
   </div>
 </template>
 
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .support-bar {
@@ -65,7 +59,8 @@
   gap: 15px;
 }
 
-.btn.telegram, .btn.vk {
+.btn.telegram,
+.btn.vk {
   padding: 8px 16px;
   color: var(--text-white);
   border-radius: 8px;
@@ -78,14 +73,15 @@
 }
 
 .btn.telegram {
-  background: #24A1DE;
+  background: #24a1de;
 }
 
 .btn.vk {
-  background: #4C75A3
+  background: #4c75a3;
 }
 
-.btn.telegram:hover, .btn.vk:hover {
+.btn.telegram:hover,
+.btn.vk:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px var(--shadow-green);
 }
@@ -126,7 +122,8 @@
     font-size: 1.1rem;
   }
 
-  .btn.telegram, .btn.vk {
+  .btn.telegram,
+  .btn.vk {
     width: 50%;
     justify-content: center;
   }

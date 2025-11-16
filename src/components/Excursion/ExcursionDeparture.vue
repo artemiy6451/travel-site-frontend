@@ -39,7 +39,7 @@ const formattedDate = computed((): string => {
   if (isToday.value) {
     return `в ${date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })}`
   }
 
@@ -47,7 +47,7 @@ const formattedDate = computed((): string => {
   if (isTomorrow.value) {
     return `в ${date.toLocaleTimeString('ru-RU', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })}`
   }
 
@@ -56,7 +56,7 @@ const formattedDate = computed((): string => {
     day: 'numeric',
     month: 'long',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 })
 </script>

@@ -18,7 +18,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   title: 'Что включено',
-  items: () => []
+  items: () => [],
 })
 </script>
 

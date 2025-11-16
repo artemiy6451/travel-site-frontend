@@ -11,7 +11,13 @@
           <div class="form-row">
             <div class="form-group">
               <label>Название *</label>
-              <input v-model="formData.title" type="text" required placeholder="Название экскурсии" :disabled="loading">
+              <input
+                v-model="formData.title"
+                type="text"
+                required
+                placeholder="Название экскурсии"
+                :disabled="loading"
+              />
             </div>
 
             <div class="form-group">
@@ -29,46 +35,139 @@
 
           <div class="form-group">
             <label>Краткое описание *</label>
-            <textarea v-model="formData.description" required placeholder="Краткое описание для карточки" rows="3"
-              :disabled="loading"></textarea>
+            <textarea
+              v-model="formData.description"
+              required
+              placeholder="Краткое описание для карточки"
+              rows="3"
+              :disabled="loading"
+            ></textarea>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>Дата отправления *</label>
-              <input v-model="formData.date" type="datetime-local" required :disabled="loading">
+              <input v-model="formData.date" type="datetime-local" required :disabled="loading" />
             </div>
 
             <div class="form-group">
               <label>Цена (руб) *</label>
-              <input v-model.number="formData.price" type="number" required min="0" placeholder="2500"
-                :disabled="loading">
+              <input
+                v-model.number="formData.price"
+                type="number"
+                required
+                min="0"
+                placeholder="2500"
+                :disabled="loading"
+              />
             </div>
 
             <div class="form-group">
               <label>Длительность (мин) *</label>
-              <input v-model.number="formData.duration" type="number" required min="0" placeholder="180"
-                :disabled="loading">
+              <input
+                v-model.number="formData.duration"
+                type="number"
+                required
+                min="0"
+                placeholder="180"
+                :disabled="loading"
+              />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>Количество человек *</label>
-              <input v-model.number="formData.people_amount" type="number" required min="1" placeholder="8"
-                :disabled="loading">
+              <input
+                v-model.number="formData.people_amount"
+                type="number"
+                required
+                min="1"
+                placeholder="8"
+                :disabled="loading"
+              />
             </div>
 
+            <!-- Загрузка изображения -->
             <div class="form-group">
-              <label>URL изображения *</label>
-              <input v-model="formData.image_url" type="text" required placeholder="https://example.com/image.jpg"
-                :disabled="loading">
+              <label>Изображение *</label>
+              <div class="image-upload-section">
+                <!-- Превью изображения -->
+                <div v-if="imagePreview" class="image-preview">
+                  <img :src="imagePreview" alt="Preview" class="preview-image" />
+                  <button
+                    type="button"
+                    class="remove-image-btn"
+                    @click="removeImage"
+                    :disabled="loading"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <!-- Кнопки загрузки -->
+                <div class="upload-options">
+                  <input
+                    type="file"
+                    ref="fileInput"
+                    accept="image/*"
+                    @change="handleFileSelect"
+                    class="file-input"
+                    :disabled="loading"
+                  />
+
+                  <div class="upload-buttons">
+                    <button
+                      type="button"
+                      class="upload-btn primary"
+                      @click="triggerFileInput"
+                      :disabled="loading"
+                    >
+                      📁 Выбрать файл
+                    </button>
+
+                    <button
+                      type="button"
+                      class="upload-btn secondary"
+                      @click="openCamera"
+                      :disabled="!supportsCamera || loading"
+                      :title="!supportsCamera ? 'Камера не поддерживается' : 'Сделать фото'"
+                    >
+                      📷 Сделать фото
+                    </button>
+                  </div>
+
+                  <!-- Или URL -->
+                  <div class="url-option">
+                    <span class="url-divider">или введите URL</span>
+                    <input
+                      v-model="formData.image_url"
+                      type="text"
+                      placeholder="https://example.com/image.jpg"
+                      :disabled="loading || !!uploadedImage"
+                      class="url-input"
+                    />
+                  </div>
+                </div>
+
+                <!-- Информация о загрузке -->
+                <div v-if="uploadStatus" class="upload-status" :class="uploadStatus.type">
+                  {{ uploadStatus.message }}
+                </div>
+
+                <!-- Подсказки -->
+                <div class="upload-hints">
+                  <small>• Поддерживаемые форматы: JPG, PNG, WebP</small>
+                  <small>• Максимальный размер: 5MB</small>
+                  <small>• Рекомендуемое соотношение: 16:9</small>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="form-group checkbox-group">
             <label class="checkbox-label">
-              <input v-model="formData.is_active" type="checkbox" :disabled="loading">
+              <input v-model="formData.is_active" type="checkbox" :disabled="loading" />
               <span class="checkmark"></span>
               Активная экскурсия
             </label>
@@ -83,42 +182,82 @@
           <!-- Полное описание маршрута -->
           <div class="form-group">
             <label>Полное описание маршрута</label>
-            <textarea v-model="formData.details.description" placeholder="Подробное описание маршрута, особенности, что увидят туристы..."
-              rows="4" :disabled="loading"></textarea>
+            <textarea
+              v-model="formData.details.description"
+              placeholder="Подробное описание маршрута, особенности, что увидят туристы..."
+              rows="4"
+              :disabled="loading"
+            ></textarea>
             <small>Это описание будет отображаться на странице экскурсии</small>
           </div>
 
           <!-- Место сбора -->
           <div class="form-group">
             <label>Место сбора</label>
-            <input v-model="formData.details.meeting_point" type="text" placeholder="Например: Центральная площадь, у фонтана"
-              :disabled="loading">
+            <input
+              v-model="formData.details.meeting_point"
+              type="text"
+              placeholder="Например: Центральная площадь, у фонтана"
+              :disabled="loading"
+            />
           </div>
 
           <!-- Что входит в экскурсию -->
           <div class="form-group">
             <label>Что входит в экскурсию</label>
             <div class="array-input">
-              <div v-for="(item, index) in formData.details.inclusions" :key="index" class="array-item">
-                <input v-model="formData.details.inclusions[index]" type="text"
-                  :placeholder="`Пункт ${index + 1}`" :disabled="loading">
-                <button type="button" class="remove-btn" @click="removeInclusion(index)" :disabled="loading">×</button>
+              <div
+                v-for="(_, index) in formData.details.inclusions"
+                :key="index"
+                class="array-item"
+              >
+                <input
+                  v-model="formData.details.inclusions[index]"
+                  type="text"
+                  :placeholder="`Пункт ${index + 1}`"
+                  :disabled="loading"
+                />
+                <button
+                  type="button"
+                  class="remove-btn"
+                  @click="removeInclusion(index)"
+                  :disabled="loading"
+                >
+                  ×
+                </button>
               </div>
               <button type="button" class="add-btn" @click="addInclusion" :disabled="loading">
                 + Добавить пункт
               </button>
             </div>
-            <small>Перечислите что включено в стоимость (трансфер, питание, услуги гида и т.д.)</small>
+            <small
+              >Перечислите что включено в стоимость (трансфер, питание, услуги гида и т.д.)</small
+            >
           </div>
 
           <!-- Требования к участникам -->
           <div class="form-group">
             <label>Требования к участникам</label>
             <div class="array-input">
-              <div v-for="(item, index) in formData.details.requirements" :key="index" class="array-item">
-                <input v-model="formData.details.requirements[index]" type="text"
-                  :placeholder="`Требование ${index + 1}`" :disabled="loading">
-                <button type="button" class="remove-btn" @click="removeRequirement(index)" :disabled="loading">×</button>
+              <div
+                v-for="(_, index) in formData.details.requirements"
+                :key="index"
+                class="array-item"
+              >
+                <input
+                  v-model="formData.details.requirements[index]"
+                  type="text"
+                  :placeholder="`Требование ${index + 1}`"
+                  :disabled="loading"
+                />
+                <button
+                  type="button"
+                  class="remove-btn"
+                  @click="removeRequirement(index)"
+                  :disabled="loading"
+                >
+                  ×
+                </button>
               </div>
               <button type="button" class="add-btn" @click="addRequirement" :disabled="loading">
                 + Добавить требование
@@ -131,10 +270,25 @@
           <div class="form-group">
             <label>Рекомендации</label>
             <div class="array-input">
-              <div v-for="(item, index) in formData.details.recommendations" :key="index" class="array-item">
-                <input v-model="formData.details.recommendations[index]" type="text"
-                  :placeholder="`Рекомендация ${index + 1}`" :disabled="loading">
-                <button type="button" class="remove-btn" @click="removeRecommendation(index)" :disabled="loading">×</button>
+              <div
+                v-for="(_, index) in formData.details.recommendations"
+                :key="index"
+                class="array-item"
+              >
+                <input
+                  v-model="formData.details.recommendations[index]"
+                  type="text"
+                  :placeholder="`Рекомендация ${index + 1}`"
+                  :disabled="loading"
+                />
+                <button
+                  type="button"
+                  class="remove-btn"
+                  @click="removeRecommendation(index)"
+                  :disabled="loading"
+                >
+                  ×
+                </button>
               </div>
               <button type="button" class="add-btn" @click="addRecommendation" :disabled="loading">
                 + Добавить рекомендацию
@@ -147,25 +301,50 @@
           <div class="form-group">
             <label>Программа тура</label>
             <div class="itinerary-list">
-              <div v-for="(item, index) in formData.details.itinerary" :key="index" class="itinerary-item">
+              <div
+                v-for="(item, index) in formData.details.itinerary"
+                :key="index"
+                class="itinerary-item"
+              >
                 <div class="itinerary-header">
                   <h4>Пункт {{ index + 1 }}</h4>
-                  <button type="button" class="remove-btn" @click="removeItineraryItem(index)" :disabled="loading">×</button>
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    @click="removeItineraryItem(index)"
+                    :disabled="loading"
+                  >
+                    ×
+                  </button>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label>Время</label>
-                    <input v-model="item.time" type="text" placeholder="09:00" :disabled="loading">
+                    <input
+                      v-model="item.time"
+                      type="text"
+                      placeholder="09:00"
+                      :disabled="loading"
+                    />
                   </div>
                   <div class="form-group">
                     <label>Заголовок *</label>
-                    <input v-model="item.title" type="text" required placeholder="Сбор группы" :disabled="loading">
+                    <input
+                      v-model="item.title"
+                      type="text"
+                      placeholder="Сбор группы"
+                      :disabled="loading"
+                    />
                   </div>
                 </div>
                 <div class="form-group">
                   <label>Описание</label>
-                  <textarea v-model="item.description" placeholder="Подробное описание этапа..."
-                    rows="2" :disabled="loading"></textarea>
+                  <textarea
+                    v-model="item.description"
+                    placeholder="Подробное описание этапа..."
+                    rows="2"
+                    :disabled="loading"
+                  ></textarea>
                 </div>
               </div>
               <button type="button" class="add-btn" @click="addItineraryItem" :disabled="loading">
@@ -176,11 +355,21 @@
         </div>
 
         <div class="form-actions">
-          <BaseButton type="button" variant="secondary" @click="handleCancel" :disabled="loading">
+          <BaseButton
+            type="button"
+            variant="secondary"
+            @click="handleCancel"
+            :disabled="loading || imageUploading"
+          >
             Отмена
           </BaseButton>
 
-          <BaseButton type="submit" variant="primary" :loading="loading" loading-text="Загрузка...">
+          <BaseButton
+            type="submit"
+            variant="primary"
+            :loading="loading || imageUploading"
+            :loading-text="getLoadingText"
+          >
             {{ editingCard ? 'Сохранить' : 'Добавить' }}
           </BaseButton>
         </div>
@@ -190,9 +379,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { type Excursion, type ExcursionCreate } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
+import { api } from '@/utils/api'
 
 interface Props {
   visible: boolean
@@ -210,14 +400,35 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   editingCard: null,
-  editingDetails: null
+  editingDetails: null,
 })
 
 const emit = defineEmits<Emits>()
 
-// Данные формы для основной информации
+// Рефы
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// Состояния загрузки изображений
+const uploadedImage = ref<File | null>(null)
+const imagePreview = ref<string>('')
+const uploadStatus = ref<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
+const supportsCamera = ref(false)
+const imageUploading = ref(false) // Новое состояние для загрузки изображения
+
+// Вычисляемое свойство для текста загрузки
+const getLoadingText = computed(() => {
+  if (imageUploading.value) return 'Загрузка изображения...'
+  if (props.loading) return 'Сохранение...'
+  return 'Загрузка...'
+})
+
+// Проверка поддержки камеры
+onMounted(() => {
+  supportsCamera.value = !!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia
+})
+
+// Данные формы
 const formData = ref({
-  // Основная информация
   title: '',
   category: '',
   description: '',
@@ -229,20 +440,198 @@ const formData = ref({
   is_active: true,
   image_url: '',
 
-  // Детальная информация
   details: {
     description: '',
     inclusions: [''],
-    itinerary: [{
-      time: '',
-      title: '',
-      description: ''
-    }],
+    itinerary: [
+      {
+        time: '',
+        title: '',
+        description: '',
+      },
+    ],
     meeting_point: '',
     requirements: [''],
-    recommendations: ['']
-  }
+    recommendations: [''],
+  },
 })
+
+// Триггер выбора файла
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+// Обработка выбора файла
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (file) {
+    validateAndSetImage(file)
+  }
+}
+
+// Валидация и установка изображения
+const validateAndSetImage = (file: File) => {
+  // Проверка типа файла
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+  if (!validTypes.includes(file.type)) {
+    showUploadStatus('error', 'Неподдерживаемый формат файла. Используйте JPG, PNG или WebP.')
+    return
+  }
+
+  // Проверка размера файла (5MB)
+  const maxSize = 5 * 1024 * 1024
+  if (file.size > maxSize) {
+    showUploadStatus('error', 'Файл слишком большой. Максимальный размер: 5MB.')
+    return
+  }
+
+  // Создание превью
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result as string
+    uploadedImage.value = file
+    formData.value.image_url = '' // Очищаем URL при загрузке файла
+    showUploadStatus('success', 'Изображение готово к загрузке')
+  }
+  reader.onerror = () => {
+    showUploadStatus('error', 'Ошибка при чтении файла')
+  }
+  reader.readAsDataURL(file)
+}
+
+// Открытие камеры
+const openCamera = async () => {
+  if (!supportsCamera.value) {
+    showUploadStatus('error', 'Ваше устройство не поддерживает камеру')
+    return
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+
+    // Здесь можно реализовать интерфейс для съемки фото
+    // Для простоты используем input с capture
+    if (fileInput.value) {
+      fileInput.value.setAttribute('capture', 'environment')
+      fileInput.value.click()
+      // Сбрасываем атрибут после использования
+      setTimeout(() => {
+        if (fileInput.value) {
+          fileInput.value.removeAttribute('capture')
+        }
+      }, 100)
+    }
+
+    // Останавливаем поток
+    stream.getTracks().forEach((track) => track.stop())
+  } catch (error) {
+    console.error('Camera error:', error)
+    showUploadStatus('error', 'Не удалось получить доступ к камере')
+  }
+}
+
+// Удаление изображения
+const removeImage = () => {
+  uploadedImage.value = null
+  imagePreview.value = ''
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+  showUploadStatus('info', 'Изображение удалено')
+}
+
+// Показать статус загрузки
+const showUploadStatus = (type: 'success' | 'error' | 'info', message: string) => {
+  uploadStatus.value = { type, message }
+  setTimeout(() => {
+    uploadStatus.value = null
+  }, 3000)
+}
+
+// Загрузка изображения на сервер
+const uploadImage = async (file: File): Promise<string> => {
+  try {
+    imageUploading.value = true
+    showUploadStatus('info', 'Загрузка изображения...')
+
+    const imageUrl = await api.saveImage(file)
+
+    showUploadStatus('success', 'Изображение успешно загружено')
+    return imageUrl
+  } catch (error) {
+    console.error('Image upload error:', error)
+    showUploadStatus('error', 'Ошибка загрузки изображения')
+    throw error
+  } finally {
+    imageUploading.value = false
+  }
+}
+
+// Обработчик отправки формы
+const handleSubmit = async () => {
+  // Валидация
+  if (
+    !formData.value.title ||
+    !formData.value.category ||
+    !formData.value.description ||
+    !formData.value.date ||
+    formData.value.price <= 0 ||
+    formData.value.duration <= 0 ||
+    formData.value.people_amount <= 0
+  ) {
+    showUploadStatus('error', 'Заполните все обязательные поля')
+    return
+  }
+
+  // Проверка изображения
+  if (!uploadedImage.value && !formData.value.image_url) {
+    showUploadStatus('error', 'Добавьте изображение экскурсии')
+    return
+  }
+
+  let finalImageUrl = formData.value.image_url
+
+  // Если есть загруженный файл, сначала загружаем его
+  if (uploadedImage.value) {
+    try {
+      finalImageUrl = await uploadImage(uploadedImage.value)
+    } catch (error) {
+      // Ошибка уже обработана в uploadImage
+      return
+    }
+  }
+
+  // Очистка детальной информации
+  const cleanedDetails = {
+    ...formData.value.details,
+    inclusions: formData.value.details.inclusions.filter((item) => item.trim() !== ''),
+    requirements: formData.value.details.requirements.filter((item) => item.trim() !== ''),
+    recommendations: formData.value.details.recommendations.filter((item) => item.trim() !== ''),
+    itinerary: formData.value.details.itinerary.filter((item) => item.title.trim() !== ''),
+  }
+
+  // Подготовка данных экскурсии
+  const excursionData: ExcursionCreate = {
+    title: formData.value.title,
+    category: formData.value.category,
+    description: formData.value.description,
+    date: new Date(formData.value.date).toISOString(),
+    price: formData.value.price,
+    duration: formData.value.duration,
+    people_amount: formData.value.people_amount,
+    people_left: formData.value.people_amount, // При создании people_left = people_amount
+    is_active: formData.value.is_active,
+    image_url: finalImageUrl,
+  }
+
+  // Отправка данных через emit
+  emit('submit', {
+    excursion: excursionData,
+    details: cleanedDetails,
+  })
+}
 
 // Методы для работы с массивами
 const addInclusion = () => {
@@ -279,7 +668,7 @@ const addItineraryItem = () => {
   formData.value.details.itinerary.push({
     time: '',
     title: '',
-    description: ''
+    description: '',
   })
 }
 
@@ -305,122 +694,338 @@ const resetForm = () => {
     details: {
       description: '',
       inclusions: [''],
-      itinerary: [{
-        time: '',
-        title: '',
-        description: ''
-      }],
+      itinerary: [
+        {
+          time: '',
+          title: '',
+          description: '',
+        },
+      ],
       meeting_point: '',
       requirements: [''],
-      recommendations: ['']
-    }
+      recommendations: [''],
+    },
   }
+  uploadedImage.value = null
+  imagePreview.value = ''
+  imageUploading.value = false
 }
 
 // Наблюдаем за изменениями редактируемой карточки
-watch(() => props.editingCard, (card) => {
-  if (card) {
-    formData.value = {
-      title: card.title,
-      category: card.category,
-      description: card.description,
-      date: new Date(card.date),
-      price: card.price,
-      duration: card.duration,
-      people_amount: card.people_amount,
-      people_left: card.people_amount,
-      image_url: card.image_url,
-      is_active: card.is_active,
-      details: props.editingDetails || {
-        description: '',
-        inclusions: [''],
-        itinerary: [{
-          time: '',
-          title: '',
-          description: ''
-        }],
-        meeting_point: '',
-        requirements: [''],
-        recommendations: ['']
+watch(
+  () => props.editingCard,
+  (card) => {
+    if (card) {
+      formData.value = {
+        title: card.title,
+        category: card.category,
+        description: card.description,
+        date: card.date,
+        price: card.price,
+        duration: card.duration,
+        people_amount: card.people_amount,
+        people_left: card.people_amount,
+        image_url: card.image_url,
+        is_active: card.is_active,
+        details: props.editingDetails || {
+          description: '',
+          inclusions: [''],
+          itinerary: [
+            {
+              time: '',
+              title: '',
+              description: '',
+            },
+          ],
+          meeting_point: '',
+          requirements: [''],
+          recommendations: [''],
+        },
       }
+
+      // Если есть изображение, показываем его как превью
+      if (card.image_url) {
+        imagePreview.value = card.image_url
+      }
+    } else {
+      resetForm()
     }
-  } else {
-    resetForm()
-  }
-}, { immediate: true })
+  },
+  { immediate: true },
+)
 
 // Наблюдаем за изменениями детальной информации
-watch(() => props.editingDetails, (details) => {
-  if (details && props.editingCard) {
-    formData.value.details = {
-      description: details.description || '',
-      inclusions: details.inclusions?.length ? details.inclusions : [''],
-      itinerary: details.itinerary?.length ? details.itinerary : [{
-        time: '',
-        title: '',
-        description: ''
-      }],
-      meeting_point: details.meeting_point || '',
-      requirements: details.requirements?.length ? details.requirements : [''],
-      recommendations: details.recommendations?.length ? details.recommendations : ['']
+watch(
+  () => props.editingDetails,
+  (details) => {
+    if (details && props.editingCard) {
+      formData.value.details = {
+        description: details.description || '',
+        inclusions: details.inclusions?.length ? details.inclusions : [''],
+        itinerary: details.itinerary?.length
+          ? details.itinerary
+          : [
+              {
+                time: '',
+                title: '',
+                description: '',
+              },
+            ],
+        meeting_point: details.meeting_point || '',
+        requirements: details.requirements?.length ? details.requirements : [''],
+        recommendations: details.recommendations?.length ? details.recommendations : [''],
+      }
     }
-  }
-})
+  },
+)
 
 // Наблюдаем за видимостью формы
-watch(() => props.visible, (visible) => {
-  if (!visible) {
-    resetForm()
-  }
-})
-
-// Обработчик отправки формы
-const handleSubmit = () => {
-  // Валидация обязательных полей основной информации
-  if (!formData.value.title || !formData.value.category || !formData.value.description ||
-    !formData.value.image_url || !formData.value.date || formData.value.price <= 0 ||
-    formData.value.duration <= 0 || formData.value.people_amount <= 0) {
-    return
-  }
-
-  // Валидация программы тура
-  const validItinerary = formData.value.details.itinerary.every(item =>
-    item.title.trim() !== '' // Заголовок обязателен
-  )
-
-  if (!validItinerary) {
-    return
-  }
-
-  // Очистка пустых значений из массивов
-  const cleanedDetails = {
-    ...formData.value.details,
-    inclusions: formData.value.details.inclusions.filter(item => item.trim() !== ''),
-    requirements: formData.value.details.requirements.filter(item => item.trim() !== ''),
-    recommendations: formData.value.details.recommendations.filter(item => item.trim() !== ''),
-    itinerary: formData.value.details.itinerary.filter(item => item.title.trim() !== '')
-  }
-
-  const submitData = {
-    excursion: {
-      ...formData.value,
-      people_left: formData.value.people_amount,
-    },
-    details: cleanedDetails
-  }
-
-  emit('submit', submitData)
-}
+watch(
+  () => props.visible,
+  (visible) => {
+    if (!visible) {
+      resetForm()
+    }
+  },
+)
 
 // Обработчик отмены
 const handleCancel = () => {
   emit('cancel')
   emit('update:visible', false)
 }
-
 </script>
 
 <style scoped>
+/* Стили для загрузки изображений */
+.image-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.image-preview {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border-green-light);
+}
+
+.preview-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.remove-image-btn:hover:not(:disabled) {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+.upload-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--border-green-light);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.upload-btn.primary {
+  background: var(--green-primary);
+  color: white;
+  border-color: var(--green-primary);
+}
+
+.upload-btn.primary:hover:not(:disabled) {
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+}
+
+.upload-btn.secondary {
+  background: white;
+  color: var(--text-dark);
+  border-color: var(--border-green-medium);
+}
+
+.upload-btn.secondary:hover:not(:disabled) {
+  background: var(--green-bg-light);
+  border-color: var(--green-primary);
+}
+
+.upload-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.url-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.url-divider {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  position: relative;
+}
+
+.url-divider::before,
+.url-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: var(--border-green-light);
+}
+
+.url-divider::before {
+  left: 0;
+}
+
+.url-divider::after {
+  right: 0;
+}
+
+.url-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border-turquoise);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--hover-turquoise);
+}
+
+.url-input:disabled {
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.upload-status {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.upload-status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.upload-status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.upload-status.info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.upload-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upload-hints small {
+  color: var(--text-light);
+  font-size: 0.75rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .upload-buttons {
+    flex-direction: column;
+  }
+
+  .upload-btn {
+    min-width: auto;
+  }
+
+  .image-preview {
+    max-width: 100%;
+  }
+
+  .preview-image {
+    height: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .upload-options {
+    gap: 8px;
+  }
+
+  .upload-btn {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Предотвращение зума на мобильных */
+@media (max-width: 768px) {
+  .url-input,
+  .upload-btn {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}
+
 .form-overlay {
   position: fixed;
   top: 0;
