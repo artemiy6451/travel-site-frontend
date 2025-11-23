@@ -101,6 +101,15 @@
                   title="Добавить людей"
                   :disabled="loading"
                 />
+                <!-- Новая кнопка для изменения номера автобуса -->
+                <BaseButton
+                  variant="secondary"
+                  size="sm"
+                  icon="🚌"
+                  @click="openBusNumberDialog(card)"
+                  title="Изменить номер автобуса"
+                  :disabled="loading"
+                />
                 <BaseButton
                   :variant="card.is_active ? 'warning' : 'success'"
                   size="sm"
@@ -154,6 +163,16 @@
       @confirm="handleAddPeopleConfirm"
       @close="handleDialogClose"
     />
+
+    <!-- Диалог изменения номера автобуса -->
+    <BusNumberDialog
+      :visible="showBusNumberDialog"
+      :card="selectedCard"
+      :loading="busNumberLoading"
+      @update:visible="showBusNumberDialog = $event"
+      @confirm="handleBusNumberConfirm"
+      @close="handleDialogClose"
+    />
   </div>
 </template>
 
@@ -165,6 +184,7 @@ import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
 import StatsComponent from '@/components/UI/StatsComponent.vue'
 import AddPeopleDialog from '@/components/Admin/AddPeopleDialog.vue'
+import BusNumberDialog from '@/components/Admin/BusNumberDialog.vue'
 
 interface Props {
   cards: Excursion[]
@@ -176,6 +196,7 @@ interface Emits {
   (e: 'edit', card: Excursion): void
   (e: 'delete', id: number): void
   (e: 'add-people', data: { id: number; additionalPeople: number }): void
+  (e: 'change-bus-number', data: { id: number; busNumber: number }): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -188,6 +209,10 @@ const emit = defineEmits<Emits>()
 const showAddPeopleDialog = ref(false)
 const selectedCard = ref<Excursion | null>(null)
 const addPeopleLoading = ref(false)
+
+// Диалог изменения номера автобуса
+const showBusNumberDialog = ref(false)
+const busNumberLoading = ref(false)
 
 // Статистика
 const stats = ref({
@@ -254,7 +279,13 @@ const openAddPeopleDialog = (card: Excursion) => {
   showAddPeopleDialog.value = true
 }
 
-// Обработка подтверждения из диалога
+// Открытие диалога изменения номера автобуса
+const openBusNumberDialog = (card: Excursion) => {
+  selectedCard.value = card
+  showBusNumberDialog.value = true
+}
+
+// Обработка подтверждения из диалога добавления мест
 const handleAddPeopleConfirm = (data: { id: number; additionalPeople: number }) => {
   addPeopleLoading.value = true
   try {
@@ -267,7 +298,20 @@ const handleAddPeopleConfirm = (data: { id: number; additionalPeople: number }) 
   }
 }
 
-// Обработка закрытия диалога
+// Обработка подтверждения из диалога номера автобуса
+const handleBusNumberConfirm = (data: { id: number; busNumber: number }) => {
+  busNumberLoading.value = true
+  try {
+    emit('change-bus-number', data)
+    showBusNumberDialog.value = false
+  } catch (error) {
+    console.error('Error changing bus number:', error)
+  } finally {
+    busNumberLoading.value = false
+  }
+}
+
+// Обработка закрытия диалогов
 const handleDialogClose = () => {
   selectedCard.value = null
 }

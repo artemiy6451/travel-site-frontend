@@ -8,6 +8,7 @@ export interface Excursion {
   duration: number
   people_amount: number
   people_left: number
+  bus_number?: number
   is_active: boolean
   image_url: string
 }

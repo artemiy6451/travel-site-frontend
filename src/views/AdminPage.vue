@@ -9,17 +9,6 @@
           <span v-if="currentUser?.is_superuser" class="admin-badge">👑 Администратор</span>
         </div>
       </div>
-      <div class="header-actions-mobile" v-if="isMobile">
-        <BaseButton
-          variant="secondary"
-          @click="refreshData"
-          :loading="loading"
-          icon="🔄"
-          size="sm"
-          class="mobile-action-btn"
-          title="Обновить"
-        />
-      </div>
     </div>
 
     <!-- Уведомления -->
@@ -58,20 +47,6 @@
           <option value="природа">Природа</option>
           <option value="городские">Городские</option>
         </select>
-
-        <!-- Кнопка обновления для десктопа -->
-        <BaseButton
-          v-if="!isMobile"
-          variant="secondary"
-          @click="refreshData"
-          :loading="loading"
-          icon="🔄"
-          size="sm"
-          class="refresh-btn"
-          title="Обновить данные"
-        >
-          <span class="btn-text">Обновить</span>
-        </BaseButton>
       </div>
     </div>
 
@@ -94,6 +69,7 @@
       @edit="editCard"
       @delete="deleteCard"
       @add-people="addPeopleToExcursion"
+      @change-bus-number="changeBusNumber"
     />
   </div>
 </template>
@@ -146,11 +122,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', checkScreenSize)
 })
-
-// Обновление данных
-const refreshData = () => {
-  loadExcursions()
-}
 
 // Загрузка текущего пользователя
 const loadCurrentUser = async () => {
@@ -285,6 +256,25 @@ const addPeopleToExcursion = async (data: { id: number; additionalPeople: number
     const errorMessage = error.message || 'Ошибка добавления мест'
     showNotification(errorMessage, 'error')
     console.error('Error adding people to excursion:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Изменение номера автобуса
+const changeBusNumber = async (data: { id: number; busNumber: number }) => {
+  loading.value = true
+  try {
+    const updatedCard = await api.changeBusNumber(data.id, data.busNumber)
+    const index = cards.value.findIndex((card: Excursion) => card.id === data.id)
+    if (index !== -1) {
+      cards.value[index] = updatedCard
+    }
+    showNotification(`Номер автобуса успешно изменен на ${data.busNumber}`, 'success')
+  } catch (error: any) {
+    const errorMessage = error.message || 'Ошибка изменения номера автобуса'
+    showNotification(errorMessage, 'error')
+    console.error('Error changing bus number:', error)
   } finally {
     loading.value = false
   }

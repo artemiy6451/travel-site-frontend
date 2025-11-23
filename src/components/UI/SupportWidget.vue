@@ -6,10 +6,10 @@
 
     <div class="support_info">
       <span class="support-time">🕒 09:00–21:00 МСК</span>
-      <a href="tel:+79787005862" class="support-link">📞 +7 (978) 700-58-62</a>
+      <a href="tel:+79787005859" class="support-link">📞 +7 (978) 700-58-59</a>
       <div class="buttons">
         <a href="https://vk.com/vvvectaa" target="_blank" class="btn vk"> ВКонтакте </a>
-        <a href="https://t.me/vvvectaa" target="_blank" class="btn telegram"> Telegram </a>
+        <a href="https://t.me/vvvecta" target="_blank" class="btn telegram"> Telegram </a>
       </div>
     </div>
   </div>

@@ -17,7 +17,6 @@
         </div>
       </div>
 
-      <!-- Обновленная карточка с оставшимися местами -->
       <div class="fact-card">
         <div class="fact-icon">👥</div>
         <div class="fact-content">
@@ -41,6 +40,16 @@
           <div class="fact-value price-tag">{{ formatPrice(excursion.price) }}</div>
         </div>
       </div>
+
+      <div class="fact-card">
+        <div class="fact-icon">🚌</div>
+        <div class="fact-content">
+          <div class="fact-label">Номер автобуса</div>
+          <div class="fact-value" :class="{ 'unknown-bus': !excursion.bus_number }">
+            {{ getBusNumberText(excursion.bus_number) }}
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </template>
@@ -53,6 +62,14 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {})
+
+// Получение текста для номера автобуса
+const getBusNumberText = (busNumber?: number): string => {
+  if (!busNumber || busNumber === 0) {
+    return 'Пока не известен'
+  }
+  return `№ ${busNumber}`
+}
 
 // Получение класса статуса мест
 const getPeopleStatusClass = (excursion: Excursion) => {
@@ -163,6 +180,13 @@ const formatDate = (dateString: string | Date): string => {
   font-size: 18px;
 }
 
+/* Стиль для неизвестного номера автобуса */
+.unknown-bus {
+  color: #94a3b8;
+  font-style: italic;
+  font-weight: 500;
+}
+
 /* Стили для информации о местах в фактах */
 .people-info {
   display: flex;
@@ -239,7 +263,7 @@ const formatDate = (dateString: string | Date): string => {
 /* Адаптивность */
 @media (max-width: 768px) {
   .facts-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .fact-card {
@@ -261,6 +285,10 @@ const formatDate = (dateString: string | Date): string => {
 }
 
 @media (max-width: 480px) {
+  .facts-grid {
+    grid-template-columns: 1fr;
+  }
+
   .section-title {
     font-size: 1.3rem;
   }

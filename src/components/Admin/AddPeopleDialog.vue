@@ -90,9 +90,8 @@ const inputRef = ref<HTMLInputElement | null>(null)
 const isFormValid = computed(() => {
   if (!props.card) return false
   return (
-    localAdditionalPeople.value > 0 &&
-    localAdditionalPeople.value <= 100 &&
-    props.card.people_left - localAdditionalPeople.value >= 0
+      props.card.people_left - localAdditionalPeople.value >= 0 &&
+      props.card.people_left - localAdditionalPeople.value <= props.card.people_amount
   )
 })
 

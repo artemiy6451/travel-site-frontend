@@ -11,7 +11,7 @@ import type {
 import type { LoginData, TokenResponse, User } from '@/types/user'
 import { cache } from '@/utils/cache'
 
-const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://192.168.0.107:8000'
+const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://192.168.0.108:8000'
 
 class Api {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -393,6 +393,21 @@ class Api {
       console.error('Error uploading image:', error)
       throw error
     }
+  }
+
+  async changeBusNumber(id: number, busNumber: number): Promise<Excursion> {
+    const response = await this.request<Excursion>(
+      `/excursions/${id}/bus-number?bus_number=${busNumber}`,
+      {
+        method: 'PUT',
+        headers: {
+          ...this.getAuthHeaders(),
+        },
+        body: JSON.stringify({ bus_number: busNumber }),
+      })
+
+    this.invalidateExcursionCache(id)
+    return response
   }
 
   async checkAdminAccess(): Promise<boolean> {
