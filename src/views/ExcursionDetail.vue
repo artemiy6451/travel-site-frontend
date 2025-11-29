@@ -428,7 +428,7 @@ onMounted(() => {
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px 120px;
+  padding: 40px 20px 40px;
 }
 
 /* Секция места сбора */

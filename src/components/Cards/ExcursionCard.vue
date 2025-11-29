@@ -1,5 +1,5 @@
 <template>
-  <div class="card" @click="$emit('click', excursion)">
+  <div class="card" @click="$emit('view-details', excursion.id)">
     <div class="card-image">
       <img :src="excursion.image_url" :alt="excursion.title" @error="handleImageError" />
       <div class="card-price">{{ formatPrice(excursion.price) }}</div>
@@ -54,7 +54,6 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'click', excursion: Excursion): void
   (e: 'view-details', id: number): void
 }
 

@@ -32,10 +32,6 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <style scoped>
-.itinerary-section {
-  margin-bottom: 40px;
-}
-
 .section-title {
   font-size: 1.5rem;
   font-weight: 700;
