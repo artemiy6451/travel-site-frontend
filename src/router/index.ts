@@ -6,6 +6,7 @@ import AcessDenied from '@/views/AccessDenied.vue'
 import ExcursionDetail from '@/views/ExcursionDetail.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import { isAuthenticated, isSuperuser } from '@/utils/auth'
+import About from '@/views/About.vue'
 
 const routes = [
   {
@@ -26,6 +27,16 @@ const routes = [
     props: true,
   },
   {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFoundView',
+    component: NotFoundView,
+  },
+  {
+    path: '/about',
+    name: 'About',
+    component: About,
+  },
+  {
     path: '/admin',
     name: 'Admin',
     component: AdminPage,
@@ -36,16 +47,23 @@ const routes = [
     name: 'Login',
     component: LoginPage,
   },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFoundView',
-    component: NotFoundView,
-  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, _, savedPosition) {
+    // if (savedPosition) {
+      // return savedPosition
+    // }
+    // if (to.hash) {
+      // return {
+        // el: to.hash,
+        // behavior: 'smooth'
+      // }
+    // }
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
 router.beforeEach((to, _, next) => {
