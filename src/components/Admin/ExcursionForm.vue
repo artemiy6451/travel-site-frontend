@@ -617,7 +617,7 @@ const handleSubmit = async () => {
     title: formData.value.title,
     category: formData.value.category,
     description: formData.value.description,
-    date: new Date(formData.value.date).toISOString(),
+    date: formData.value.date,
     price: formData.value.price,
     duration: formData.value.duration,
     people_amount: formData.value.people_amount,

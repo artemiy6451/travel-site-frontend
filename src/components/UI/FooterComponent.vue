@@ -20,10 +20,10 @@
             ВКонтакте
           </a>
           <a
-            href="https://vk.com/vvvectaa"
+            href="https://t.me/vvvecta"
             target="_blank"
             class="social_link"
-            aria-label="Наша группа ВКонтакте"
+            aria-label="Наш канал в Телеграме"
           >
             <span class="social_icon">📱</span>
             Телеграм
@@ -46,7 +46,7 @@
         <div class="contact_info">
           <div class="contact_item">
             <span class="contact_icon">📞</span>
-            <a href="tel:+79787005862" class="contact_link">+7 (978) 700-58-62</a>
+            <a href="tel:+79787005859" class="contact_link">+7 (978) 700-58-59</a>
           </div>
           <div class="contact_item">
             <span class="contact_icon">📍</span>
