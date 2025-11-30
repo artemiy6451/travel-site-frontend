@@ -37,6 +37,7 @@
         <nav class="footer_nav">
           <router-link to="/" class="nav_link">Главная</router-link>
           <router-link to="/about" class="nav_link">О нас</router-link>
+          <router-link to="/reviews" class="nav_link">Отзывы</router-link>
         </nav>
       </div>
 

@@ -7,6 +7,7 @@ import ExcursionDetail from '@/views/ExcursionDetail.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import { isAuthenticated, isSuperuser } from '@/utils/auth'
 import About from '@/views/About.vue'
+import ReviewView from '@/views/ReviewView.vue'
 
 const routes = [
   {
@@ -35,6 +36,11 @@ const routes = [
     path: '/about',
     name: 'About',
     component: About,
+  },
+  {
+    path: '/reviews',
+    name: 'ReviewsView',
+    component: ReviewView,
   },
   {
     path: '/admin',

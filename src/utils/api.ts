@@ -8,6 +8,7 @@ import type {
   ExcursionDetailsUpdate,
   ItineraryItem,
 } from '@/types/excursion'
+import type { Review, ReviewCreate, ReviewStats } from '@/types/review'
 import type { LoginData, TokenResponse, User } from '@/types/user'
 import { cache } from '@/utils/cache'
 
@@ -408,6 +409,130 @@ class Api {
 
     this.invalidateExcursionCache(id)
     return response
+  }
+
+  // Review methods
+  async getReviews(params?: {
+    skip?: number
+    limit?: number
+    excursion_id?: number
+  }): Promise<Review[]> {
+    const cacheKey = this.buildCacheKey('reviews', params)
+    const cached = cache.get(cacheKey)
+    if (cached) return cached
+
+    const queryParams = new URLSearchParams()
+    if (params?.skip) queryParams.append('skip', params.skip.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.excursion_id) queryParams.append('excursion_id', params.excursion_id.toString())
+
+    const queryString = queryParams.toString()
+    const endpoint = queryString ? `/review/?${queryString}` : '/review'
+
+    const response = await this.request<Review[]>(endpoint)
+    cache.set(cacheKey, response, 5 * 60 * 1000) // 5 минут
+    return response
+  }
+
+  async getReviewsStats(excursion_id?: number): Promise<ReviewStats> {
+    const cacheKey = `reviews_stats:${excursion_id || 'all'}`
+    const cached = cache.get(cacheKey)
+    if (cached) return cached
+
+    const endpoint = excursion_id ? `/review/stats?excursion_id=${excursion_id}` : '/review/stats'
+
+    const response = await this.request<ReviewStats>(endpoint)
+    cache.set(cacheKey, response, 2 * 60 * 1000) // 2 минуты
+    return response
+  }
+
+  async createReview(review: ReviewCreate): Promise<Review> {
+    const response = await this.request<Review>('/review/', {
+      method: 'POST',
+      body: JSON.stringify(review),
+    })
+
+    // Инвалидируем кеш отзывов
+    this.invalidateReviewsCache()
+    return response
+  }
+
+  // Admin review methods
+  async getAllReviews(params?: {
+    skip?: number
+    limit?: number
+  }): Promise<Review[]> {
+    const response = await this.request<Review[]>('/review/admin/all', {
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+    })
+    return response
+  }
+
+  async getPendingReviews(params?: {
+    skip?: number
+    limit?: number
+  }): Promise<Review[]> {
+    const response = await this.request<Review[]>('/review/admin/pending', {
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+    })
+    return response
+  }
+
+  async approveReview(reviewId: number): Promise<Review> {
+    const response = await this.request<Review>(`/review/admin/${reviewId}/approve`, {
+      method: 'POST',
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+    })
+
+    this.invalidateReviewsCache()
+    return response
+  }
+
+  async hideReview(reviewId: number): Promise<Review> {
+    const response = await this.request<Review>(`/review/admin/${reviewId}/hide`, {
+      method: 'POST',
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+    })
+
+    this.invalidateReviewsCache()
+    return response
+  }
+
+  async showReview(reviewId: number): Promise<Review> {
+    const response = await this.request<Review>(`/review/admin/${reviewId}/show`, {
+      method: 'POST',
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+    })
+
+    this.invalidateReviewsCache()
+    return response
+  }
+
+  async deleteReview(reviewId: number): Promise<void> {
+    await this.request(`/review/admin/${reviewId}`, {
+      method: 'DELETE',
+      headers: {
+        ...this.getAuthHeaders(),
+      },
+    })
+
+    this.invalidateReviewsCache()
+  }
+
+  // Вспомогательный метод для инвалидации кеша отзывов
+  private invalidateReviewsCache() {
+    cache.clearByPrefix('reviews')
+    cache.clearByPrefix('reviews_stats')
   }
 
   async checkAdminAccess(): Promise<boolean> {
