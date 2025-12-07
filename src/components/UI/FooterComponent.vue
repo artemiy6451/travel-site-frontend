@@ -51,7 +51,7 @@
           </div>
           <div class="contact_item">
             <span class="contact_icon">📍</span>
-            <span class="contact_text">Крым</span>
+            <span class="contact_text">Симферополь</span>
           </div>
         </div>
       </div>

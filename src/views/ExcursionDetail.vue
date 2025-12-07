@@ -133,6 +133,15 @@
       >
         {{ excursion.people_left > 0 ? 'Забронировать' : 'Мест нет' }}
       </BaseButton>
+
+      <!-- Модальное окно -->
+      <BookingForm
+        :visible="showBookingModal"
+        :excursion="excursion"
+        @update:visible="showBookingModal = $event"
+        @success="handleBookingSuccess"
+        @close="handleBookingClose"
+      />
     </div>
   </div>
 </template>
@@ -149,6 +158,7 @@ import ExcursionFacts from '@/components/Excursion/ExcursionFacts.vue'
 import ExcursionDescription from '@/components/Excursion/ExcursionDescription.vue'
 import ExcursionIncluded from '@/components/Excursion/ExcursionIncluded.vue'
 import ExcursionItinerary from '@/components/Excursion/ExcursionItinerary.vue'
+import BookingForm from '@/components/UI/BookingForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -187,7 +197,7 @@ const loadExcursion = async () => {
 
   try {
     // Используем новый метод для получения полной информации
-    excursion.value = await api.getExcursionFull(excursionId)
+    excursion.value = await api.excursions.getExcursionFull(excursionId)
   } catch (err: any) {
     if (err.message === 'Excursion not found' || err.response?.status === 404) {
       error.value = 'Экскурсия не найдена'
@@ -198,9 +208,15 @@ const loadExcursion = async () => {
 }
 
 // Обработка бронирования
-const handleBooking = () => {
+const showBookingModal = ref(false)
+const handleBooking = (booking: any) => {
   if (!excursion.value || excursion.value.people_left === 0) return
-  window.open('https://vk.com/vvvectaa', '_blank')
+  // window.open('https://vk.com/vvvectaa', '_blank')
+  showBookingModal.value = true
+}
+
+const handleBookingClose = () => {
+  showBookingModal.value = false
 }
 
 // Дополнительные функции

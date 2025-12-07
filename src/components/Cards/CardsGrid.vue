@@ -118,7 +118,7 @@ const loadExcursions = async () => {
   loading.value = true
   error.value = ''
   try {
-    const response = await api.getExcursions()
+    const response = await api.excursions.getExcursions()
     // Фильтруем активные экскурсии и сортируем по дате
     excursions.value = response
       .filter((excursion) => excursion.is_active)
@@ -144,7 +144,7 @@ const handleSearchExecution = async (value: string) => {
   if (value.trim()) {
     loading.value = true
     try {
-      const results = await api.searchExcursions(value)
+      const results = await api.excursions.searchExcursions(value)
       excursions.value = results
         .filter((excursion) => excursion.is_active)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -169,7 +169,7 @@ const setActiveFilter = async (filterId: string) => {
   } else {
     loading.value = true
     try {
-      const results = await api.getExcursionsByCategory(filterId)
+      const results = await api.excursions.getExcursionsByCategory(filterId)
       excursions.value = results
         .filter((excursion) => excursion.is_active)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())

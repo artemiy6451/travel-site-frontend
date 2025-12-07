@@ -18,7 +18,6 @@
         </div>
       </div>
 
-      <!-- Остальной код остается без изменений -->
       <!-- Статистика -->
       <div v-if="stats" class="stats-section">
         <div class="stats-grid">
@@ -34,7 +33,10 @@
       </div>
 
       <!-- Форма отзыва -->
-      <ReviewForm class="form-section" />
+      <ReviewForm
+        class="form-section"
+        @review-created="handleReviewCreated"
+      />
 
       <!-- Список отзывов -->
       <div class="reviews-section">
@@ -88,15 +90,13 @@
             :key="review.id"
             :review="review"
             :is-admin="isAdmin"
-            @approve="handleApproveReview"
-            @hide="handleHideReview"
-            @show="handleShowReview"
+            @toggle="handleToggleReview"
             @delete="handleDeleteReview"
           />
         </div>
 
-        <!-- Пагинация -->
-        <div v-if="displayedReviews.length > 0 && hasMore" class="pagination">
+        <!-- Пагинация (только для публичных отзывов) -->
+        <div v-if="!isAdmin && displayedReviews.length > 0 && hasMore" class="pagination">
           <button
             @click="loadMore"
             :disabled="loading"
@@ -113,9 +113,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router' // Добавляем useRouter
+import { useRouter } from 'vue-router'
 import { api } from '@/utils/api'
-import type { Review, ReviewStats } from '@/types/review'
+import type { Review, ReviewStats, ReviewCreate } from '@/types/review'
 import ReviewForm from '@/components/UI/ReviewForm.vue'
 import ReviewCard from '@/components/UI/ReviewCard.vue'
 
@@ -129,24 +129,29 @@ const approvedReviews = ref<Review[]>([])
 const stats = ref<ReviewStats | null>(null)
 const loading = ref(false)
 const isAdmin = ref(false)
-const currentTab = ref<'all' | 'pending' | 'approved'>('all')
+const currentTab = ref<'all' | 'pending' | 'approved'>('approved')
 
-// Пагинация
+// Пагинация (только для публичных отзывов)
 const limit = 10
 const skip = ref(0)
 const hasMore = ref(true)
 
 // Computed
 const displayedReviews = computed(() => {
-  switch (currentTab.value) {
-    case 'all':
-      return allReviews.value
-    case 'pending':
-      return pendingReviews.value
-    case 'approved':
-      return approvedReviews.value
-    default:
-      return allReviews.value
+  if (isAdmin.value) {
+    switch (currentTab.value) {
+      case 'all':
+        return allReviews.value
+      case 'pending':
+        return pendingReviews.value.filter(r => !r.is_active)
+      case 'approved':
+        return approvedReviews.value.filter(r => r.is_active)
+      default:
+        return allReviews.value
+    }
+  } else {
+    // Для не-админов показываем только одобренные активные отзывы
+    return approvedReviews.value.filter(r => r.is_active)
   }
 })
 
@@ -155,18 +160,19 @@ const goBack = () => {
   router.push('/')
 }
 
-// Остальные методы остаются без изменений
+// Загрузка статистики
 const loadStats = async () => {
   try {
-    stats.value = await api.getReviewsStats()
+    stats.value = await api.reviews.getReviewsStats()
   } catch (error) {
     console.error('Error loading stats:', error)
   }
 }
 
-const loadReviews = async (reset = false) => {
+// Загрузка одобренных отзывов (публичных)
+const loadApprovedReviews = async (reset = false) => {
   if (reset) {
-    allReviews.value = []
+    approvedReviews.value = []
     skip.value = 0
     hasMore.value = true
   }
@@ -176,100 +182,119 @@ const loadReviews = async (reset = false) => {
   loading.value = true
 
   try {
-    const params = { limit, skip: skip.value }
-    const reviews = await api.getReviews(params)
+    const reviews = await api.reviews.getApprovedReviews()
 
     if (reset) {
-      allReviews.value = reviews
+      approvedReviews.value = reviews
     } else {
-      allReviews.value.push(...reviews)
+      approvedReviews.value.push(...reviews)
     }
 
-    hasMore.value = reviews.length === limit
-    skip.value += reviews.length
-
-    // Фильтруем для админских вкладок
-    if (isAdmin.value) {
-      pendingReviews.value = allReviews.value.filter(r => !r.is_approved)
-      approvedReviews.value = allReviews.value.filter(r => r.is_approved && r.is_active)
-    }
+    hasMore.value = false
 
   } catch (error) {
-    console.error('Error loading reviews:', error)
+    console.error('Error loading approved reviews:', error)
   } finally {
     loading.value = false
   }
 }
 
+// Загрузка всех админских отзывов
 const loadAdminReviews = async () => {
   if (!isAdmin.value) return
 
+  loading.value = true
+
   try {
     const [all, pending] = await Promise.all([
-      api.getAllReviews(),
-      api.getPendingReviews()
+      api.reviews.getAllReviews(),
+      api.reviews.getPendingReviews()
     ])
 
     allReviews.value = all
     pendingReviews.value = pending
-    approvedReviews.value = all.filter(r => r.is_approved && r.is_active)
+    approvedReviews.value = all.filter(r => r.is_active)
 
   } catch (error) {
     console.error('Error loading admin reviews:', error)
+  } finally {
+    loading.value = false
   }
 }
 
+// Загрузка дополнительных отзывов (для пагинации)
 const loadMore = () => {
-  loadReviews(false)
-}
-
-const handleApproveReview = async (reviewId: number) => {
-  try {
-    await api.approveReview(reviewId)
-    await Promise.all([loadStats(), loadAdminReviews()])
-  } catch (error) {
-    console.error('Error approving review:', error)
-    alert('Ошибка при одобрении отзыва')
+  if (isAdmin.value) {
+    loadAdminReviews()
+  } else {
+    loadApprovedReviews(false)
   }
 }
 
-const handleHideReview = async (reviewId: number) => {
+// Обработчик создания отзыва
+const handleReviewCreated = async (reviewData: ReviewCreate) => {
   try {
-    await api.hideReview(reviewId)
-    await Promise.all([loadStats(), loadAdminReviews()])
+    const newReview = await api.reviews.createReview(reviewData)
+    await loadStats()
+    if (isAdmin.value) {
+      await loadAdminReviews()
+    }
+    alert('Отзыв успешно отправлен на модерацию!')
   } catch (error) {
-    console.error('Error hiding review:', error)
-    alert('Ошибка при скрытии отзыва')
+    console.error('Error creating review:', error)
+    alert('Ошибка при отправке отзыва')
   }
 }
 
-const handleShowReview = async (reviewId: number) => {
+// Обработчик переключения статуса отзыва
+const handleToggleReview = async (reviewId: number) => {
   try {
-    await api.showReview(reviewId)
-    await Promise.all([loadStats(), loadAdminReviews()])
+    await api.reviews.toggleReview(reviewId)
+    await loadStats()
+    if (isAdmin.value) {
+      await loadAdminReviews()
+    } else {
+      await loadApprovedReviews(true)
+    }
   } catch (error) {
-    console.error('Error showing review:', error)
-    alert('Ошибка при показе отзыва')
+    console.error('Error toggling review:', error)
+    alert('Ошибка при изменении статуса отзыва')
   }
 }
 
+// Обработчик удаления отзыва
 const handleDeleteReview = async (reviewId: number) => {
   if (!confirm('Вы уверены, что хотите удалить этот отзыв?')) return
 
   try {
-    await api.deleteReview(reviewId)
-    await Promise.all([loadStats(), loadAdminReviews()])
+    await api.reviews.deleteReview(reviewId)
+    await loadStats()
+    if (isAdmin.value) {
+      await loadAdminReviews()
+    } else {
+      await loadApprovedReviews(true)
+    }
+    alert('Отзыв успешно удален')
   } catch (error) {
     console.error('Error deleting review:', error)
     alert('Ошибка при удалении отзыва')
   }
 }
 
+// Проверка прав администратора
 const checkAdminAccess = async () => {
   try {
-    isAdmin.value = await api.checkAdminAccess()
-  } catch {
-    isAdmin.value = false
+    await api.reviews.getAllReviews()
+    isAdmin.value = true
+    currentTab.value = 'all'
+  } catch (error: any) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      isAdmin.value = false
+      currentTab.value = 'approved'
+    } else {
+      console.error('Error checking admin access:', error)
+      isAdmin.value = false
+    }
   }
 }
 
@@ -281,27 +306,26 @@ onMounted(async () => {
   if (isAdmin.value) {
     await loadAdminReviews()
   } else {
-    await loadReviews(true)
+    await loadApprovedReviews(true)
   }
 })
 </script>
 
 <style scoped>
 .reviews-page {
-  min-height: 100vh;
-  background: var(--green-bg);
   padding: 40px 0;
+  background: var(--green-bg);
+  min-height: 100vh;
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-/* Новые стили для хедера с кнопкой назад */
 .page-header {
-  margin-bottom: 50px;
+  margin-bottom: 40px;
 }
 
 .header-top {
@@ -309,41 +333,44 @@ onMounted(async () => {
 }
 
 .back-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  background: var(--white);
+  background: var(--green-bg-light);
   border: 1px solid var(--border-green);
   border-radius: 8px;
-  color: var(--text-dark);
-  font-weight: 500;
+  color: var(--text-medium);
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  font-size: 0.95rem;
+  padding: 10px 16px;
+  transition: all 0.3s;
 }
 
 .back-button:hover {
-  background: var(--green-bg-light);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--shadow-green-light);
+  background: var(--hover-green);
+  color: var(--text-dark);
+  border-color: var(--border-green-medium);
+  transform: translateX(-2px);
 }
 
 .back-icon {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 20px;
 }
 
 .header-content {
   text-align: center;
+  padding: 20px 0;
 }
 
 .page-title {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 700;
-  color: var(--text-dark);
   margin-bottom: 16px;
+  color: var(--text-dark);
+  background: var(--gradient-green);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .page-subtitle {
@@ -354,107 +381,142 @@ onMounted(async () => {
   line-height: 1.6;
 }
 
-/* Статистика */
 .stats-section {
-  margin-bottom: 50px;
+  margin: 40px 0;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .stat-card {
   background: var(--white);
-  padding: 25px;
-  border-radius: 12px;
+  border-radius: 16px;
+  padding: 30px 20px;
   text-align: center;
+  box-shadow: 0 8px 32px var(--shadow-green-light);
   border: 1px solid var(--border-green);
-  box-shadow: 0 2px 8px var(--shadow-green-light);
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-green);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px var(--shadow-green);
 }
 
 .stat-value {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
   color: var(--green-primary);
   margin-bottom: 8px;
+  line-height: 1;
 }
 
 .stat-label {
+  font-size: 15px;
   color: var(--text-medium);
-  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
-/* Форма */
 .form-section {
-  margin-bottom: 60px;
+  margin: 50px 0;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* Секция отзывов */
 .reviews-section {
-  margin-bottom: 40px;
+  margin: 60px 0;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   flex-wrap: wrap;
   gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-green);
 }
 
 .section-title {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 1.8rem;
+  font-weight: 700;
   color: var(--text-dark);
   margin: 0;
+  padding: 0;
 }
 
 .admin-tabs {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--green-bg-light);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border-green);
 }
 
 .tab-btn {
-  padding: 8px 16px;
-  border: 1px solid var(--border-green);
-  background: var(--white);
-  border-radius: 6px;
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-medium);
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  background: var(--hover-green);
+  color: var(--text-dark);
 }
 
 .tab-btn.active {
-  background: var(--green-primary);
-  color: var(--white);
-  border-color: var(--green-primary);
+  background: var(--white);
+  color: var(--green-primary);
+  box-shadow: 0 4px 12px var(--shadow-green-light);
+  border: 1px solid var(--border-green);
 }
 
-.tab-btn:hover:not(.active) {
-  background: var(--green-bg-light);
-}
-
-/* Состояния */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 60px 20px;
-  color: var(--text-light);
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--text-medium);
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--green-light);
-  border-top: 3px solid var(--green-primary);
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--green-bg-light);
+  border-top: 4px solid var(--green-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  margin-bottom: 24px;
 }
 
 @keyframes spin {
@@ -464,118 +526,145 @@ onMounted(async () => {
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   color: var(--text-light);
+  background: var(--white);
+  border-radius: 20px;
+  border: 2px dashed var(--border-green);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .empty-icon {
-  font-size: 4rem;
-  margin-bottom: 20px;
+  font-size: 64px;
+  margin-bottom: 24px;
+  opacity: 0.7;
 }
 
 .empty-state h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-dark);
+}
+
+.empty-state p {
+  font-size: 1.1rem;
   color: var(--text-medium);
-  margin-bottom: 10px;
+  margin: 0;
 }
 
-/* Сетка отзывов */
 .reviews-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 30px;
+  margin-bottom: 50px;
 }
 
-/* Пагинация */
 .pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
+  text-align: center;
+  padding: 30px 0;
 }
 
 .load-more-btn {
-  background: var(--green-bg-light);
-  border: 1px solid var(--border-green);
-  color: var(--text-dark);
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 500;
+  padding: 16px 40px;
+  background: var(--gradient-green);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
+  box-shadow: 0 6px 20px var(--shadow-green);
 }
 
 .load-more-btn:hover:not(:disabled) {
-  background: var(--green-lightest);
+  background: var(--gradient-green-hover);
   transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--shadow-green-strong);
+}
+
+.load-more-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .load-more-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
   .reviews-page {
-    padding: 30px 0;
+    padding: 20px 0;
   }
 
   .page-title {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
 
   .page-subtitle {
     font-size: 1.1rem;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .stat-card {
-    padding: 20px;
-  }
-
-  .stat-value {
-    font-size: 2rem;
+    padding: 0 10px;
   }
 
   .section-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .admin-tabs {
     width: 100%;
-    justify-content: center;
+    overflow-x: auto;
+    padding: 4px;
   }
 
-  .back-button {
-    padding: 8px 14px;
-    font-size: 0.9rem;
+  .tab-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    flex: 1;
+    min-width: fit-content;
+  }
+
+  .reviews-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .stat-card {
+    padding: 24px 16px;
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
   }
 }
 
 @media (max-width: 480px) {
-  .reviews-page {
-    padding: 20px 0;
+  .container {
+    padding: 0 16px;
   }
 
   .page-title {
     font-size: 1.8rem;
   }
 
+  .section-title {
+    font-size: 1.5rem;
+  }
+
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 
-  .container {
-    padding: 0 16px;
+  .stat-value {
+    font-size: 2rem;
   }
 
-  .back-button {
-    width: 100%;
-    justify-content: center;
+  .stat-label {
+    font-size: 13px;
   }
 }
 </style>

@@ -126,7 +126,7 @@ onUnmounted(() => {
 // Загрузка текущего пользователя
 const loadCurrentUser = async () => {
   try {
-    currentUser.value = await api.getCurrentUser()
+    currentUser.value = await api.auth.getCurrentUser()
   } catch {
     showNotification('Ошибка загрузки пользователя', 'error')
   }
@@ -140,7 +140,7 @@ const loadExcursions = async () => {
     if (selectedCategory.value) {
       params.category = selectedCategory.value
     }
-    const response = await api.getExcursions(params)
+    const response = await api.excursions.getExcursions(params)
 
     cards.value = response.sort((a, b) => {
       if (a.is_active !== b.is_active) {
@@ -161,7 +161,7 @@ const loadExcursions = async () => {
 // Загрузка детальной информации для экскурсии
 const loadExcursionDetails = async (excursionId: number): Promise<ExcursionDetails | null> => {
   try {
-    return await api.getExcursionDetails(excursionId)
+    return await api.excursions.getExcursionDetails(excursionId)
   } catch (error) {
     if (error instanceof Error && error.message.includes('404')) {
       return null
@@ -175,7 +175,7 @@ const loadExcursionDetails = async (excursionId: number): Promise<ExcursionDetai
 const handleSearch = async () => {
   if (searchQuery.value.trim()) {
     try {
-      const response = await api.searchExcursions(searchQuery.value)
+      const response = await api.excursions.searchExcursions(searchQuery.value)
       cards.value = response.sort((a, b) => {
         if (a.is_active !== b.is_active) {
           return a.is_active ? -1 : 1
@@ -212,21 +212,21 @@ const saveCard = async (data: { excursion: ExcursionCreate; details: ExcursionDe
     let excursion: Excursion
 
     if (editingCard.value) {
-      excursion = await api.updateExcursion(editingCard.value.id, data.excursion)
+      excursion = await api.excursions.updateExcursion(editingCard.value.id, data.excursion)
       if (editingDetails.value) {
-        await api.updateExcursionDetails(editingCard.value.id, data.details)
+        await api.excursions.updateExcursionDetails(editingCard.value.id, data.details)
       } else {
-        await api.createExcursionDetails(editingCard.value.id, data.details)
+        await api.excursions.createExcursionDetails(editingCard.value.id, data.details)
       }
       showNotification('Экскурсия успешно обновлена')
     } else {
-      excursion = await api.createExcursion(data.excursion)
+      excursion = await api.excursions.createExcursion(data.excursion)
       if (
         Object.values(data.details).some((value) =>
           Array.isArray(value) ? value.some((item) => item && item !== '') : value && value !== '',
         )
       ) {
-        await api.createExcursionDetails(excursion.id, data.details)
+        await api.excursions.createExcursionDetails(excursion.id, data.details)
       }
       showNotification('Экскурсия успешно создана')
     }
@@ -246,7 +246,7 @@ const saveCard = async (data: { excursion: ExcursionCreate; details: ExcursionDe
 const addPeopleToExcursion = async (data: { id: number; additionalPeople: number }) => {
   loading.value = true
   try {
-    const updatedCard = await api.addPeopleToExcursion(data.id, data.additionalPeople)
+    const updatedCard = await api.excursions.addPeopleToExcursion(data.id, data.additionalPeople)
     const index = cards.value.findIndex((card: Excursion) => card.id === data.id)
     if (index !== -1) {
       cards.value[index] = updatedCard
@@ -265,7 +265,7 @@ const addPeopleToExcursion = async (data: { id: number; additionalPeople: number
 const changeBusNumber = async (data: { id: number; busNumber: number }) => {
   loading.value = true
   try {
-    const updatedCard = await api.changeBusNumber(data.id, data.busNumber)
+    const updatedCard = await api.excursions.changeBusNumber(data.id, data.busNumber)
     const index = cards.value.findIndex((card: Excursion) => card.id === data.id)
     if (index !== -1) {
       cards.value[index] = updatedCard
@@ -284,7 +284,7 @@ const changeBusNumber = async (data: { id: number; busNumber: number }) => {
 const toggleCardVisibility = async (id: number) => {
   loading.value = true
   try {
-    const updatedCard = await api.toggleExcursionActive(id)
+    const updatedCard = await api.excursions.toggleExcursionActive(id)
     const index = cards.value.findIndex((card: Excursion) => card.id === id)
     if (index !== -1) {
       cards.value[index] = updatedCard
@@ -318,7 +318,7 @@ const editCard = async (card: Excursion) => {
 const deleteCard = async (id: number) => {
   loading.value = true
   try {
-    await api.deleteExcursion(id)
+    await api.excursions.deleteExcursion(id)
     showNotification('Экскурсия успешно удалена')
     await loadExcursions()
   } catch (error) {

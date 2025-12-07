@@ -439,6 +439,7 @@ const formData = ref({
   people_left: 0,
   is_active: true,
   image_url: '',
+  bus_number: 0,
 
   details: {
     description: '',
@@ -556,7 +557,7 @@ const uploadImage = async (file: File): Promise<string> => {
     imageUploading.value = true
     showUploadStatus('info', 'Загрузка изображения...')
 
-    const imageUrl = await api.saveImage(file)
+    const imageUrl = await api.excursions.saveImage(file)
 
     showUploadStatus('success', 'Изображение успешно загружено')
     return imageUrl
@@ -621,9 +622,10 @@ const handleSubmit = async () => {
     price: formData.value.price,
     duration: formData.value.duration,
     people_amount: formData.value.people_amount,
-    people_left: formData.value.people_amount, // При создании people_left = people_amount
+    people_left: formData.value.people_amount,
     is_active: formData.value.is_active,
     image_url: finalImageUrl,
+    bus_number: formData.value.bus_number,
   }
 
   // Отправка данных через emit
@@ -691,6 +693,7 @@ const resetForm = () => {
     people_left: 0,
     is_active: true,
     image_url: '',
+    bus_number: 0,
     details: {
       description: '',
       inclusions: [''],
@@ -724,9 +727,10 @@ watch(
         price: card.price,
         duration: card.duration,
         people_amount: card.people_amount,
-        people_left: card.people_amount,
+        people_left: card.people_left,
         image_url: card.image_url,
         is_active: card.is_active,
+        bus_number: card.bus_number,
         details: props.editingDetails || {
           description: '',
           inclusions: [''],

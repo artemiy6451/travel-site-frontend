@@ -1,110 +1,88 @@
 <template>
-  <div class="review-card" :class="{
-    'pending': !review.is_approved,
-    'hidden': !review.is_active
-  }">
-    <div class="review-header">
-      <div class="review-author">
-        <div class="author-avatar">
-          {{ review.author_name.charAt(0).toUpperCase() }}
+  <div class="review-card" :class="{ 'pending': !review.is_active }">
+    <div class="card-header">
+      <div class="reviewer-info">
+        <div class="avatar">
+          {{ getInitials(review.author_name) }}
         </div>
-        <div class="author-info">
-          <div class="author-name">{{ review.author_name }}</div>
-          <div class="review-date">{{ formatDate(review.created_at) }}</div>
+        <div class="info">
+          <h3 class="reviewer-name">{{ review.author_name }}</h3>
+          <div class="review-meta">
+            <div class="rating">
+              <span class="star filled" v-for="n in review.rating" :key="n">★</span>
+              <span class="star" v-for="n in 5 - review.rating" :key="'empty-' + n">☆</span>
+            </div>
+            <div class="review-date">
+              {{ formatDate(review.created_at) }}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="review-rating">
-        <span class="rating-stars">
-          <span
-            v-for="star in 5"
-            :key="star"
-            class="star"
-            :class="{ active: star <= review.rating }"
-          >
-            ⭐
-          </span>
+      <div v-if="isAdmin" class="admin-badges">
+        <span
+          class="status-badge"
+          :class="{
+            'approved': review.is_active,
+            'pending': !review.is_active
+          }"
+        >
+          {{ review.is_active ? 'Одобрен' : 'На модерации' }}
         </span>
-        <span class="rating-value">{{ review.rating }}/5</span>
+        <span v-if="!review.is_active" class="email-badge">
+          {{ review.email }}
+        </span>
       </div>
     </div>
 
     <div class="review-content">
-      {{ review.text }}
+      <p>{{ review.text }}</p>
     </div>
 
-    <!-- Админские действия -->
+    <!-- Админские кнопки -->
     <div v-if="isAdmin" class="admin-actions">
-      <div class="admin-status">
-        <span v-if="!review.is_approved" class="status-badge pending">
-          На модерации
-        </span>
-        <span v-if="!review.is_active" class="status-badge hidden">
-          Скрыт
-        </span>
-        <span v-if="review.excursion_id" class="excursion-badge">
-          Экскурсия #{{ review.excursion_id }}
-        </span>
-      </div>
-
-      <div class="admin-buttons">
-        <button
-          v-if="!review.is_approved"
-          @click="$emit('approve', review.id)"
-          class="admin-btn approve-btn"
-          title="Одобрить отзыв"
-        >
-          ✅ Одобрить
-        </button>
-
-        <button
-          v-if="review.is_active && review.is_approved"
-          @click="$emit('hide', review.id)"
-          class="admin-btn hide-btn"
-          title="Скрыть отзыв"
-        >
-          👁️ Скрыть
-        </button>
-
-        <button
-          v-if="!review.is_active"
-          @click="$emit('show', review.id)"
-          class="admin-btn show-btn"
-          title="Показать отзыв"
-        >
-          👁️‍🗨️ Показать
-        </button>
-
-        <button
-          @click="$emit('delete', review.id)"
-          class="admin-btn delete-btn"
-          title="Удалить отзыв"
-        >
-          🗑️ Удалить
-        </button>
-      </div>
+      <button
+        @click="$emit('toggle', review.id)"
+        class="action-btn toggle-btn"
+        :class="{ 'hide': review.is_active }"
+      >
+        {{ review.is_active ? 'Скрыть' : 'Одобрить' }}
+      </button>
+      <button
+        @click="$emit('delete', review.id)"
+        class="action-btn delete-btn"
+      >
+        Удалить
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { defineProps, defineEmits } from 'vue'
 import type { Review } from '@/types/review'
 
-interface Props {
+defineProps<{
   review: Review
   isAdmin?: boolean
-}
+}>()
 
-defineProps<Props>()
 defineEmits<{
-  approve: [id: number]
-  hide: [id: number]
-  show: [id: number]
+  toggle: [id: number]
   delete: [id: number]
 }>()
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('ru-RU', {
+const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase())
+    .join('')
+    .substring(0, 2)
+}
+
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -115,290 +93,302 @@ const formatDate = (dateString: string) => {
 <style scoped>
 .review-card {
   background: var(--white);
-  padding: 24px;
-  border-radius: 12px;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 8px 32px var(--shadow-green-light);
   border: 1px solid var(--border-green);
-  box-shadow: 0 2px 8px var(--shadow-green-light);
   transition: all 0.3s ease;
-  max-width: 100%;
-  box-sizing: border-box;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  position: relative;
+  overflow: hidden;
 }
 
 .review-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--shadow-green);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px var(--shadow-green);
+  border-color: var(--border-green-medium);
 }
 
 .review-card.pending {
-  border-left: 4px solid var(--accent-warning);
-  background: var(--green-bg-lighter);
+  background: linear-gradient(135deg, var(--green-bg) 0%, var(--white) 100%);
+  border: 2px solid var(--green-light);
+  animation: pulse 2s infinite;
 }
 
-.review-card.hidden {
-  border-left: 4px solid var(--accent-error);
-  background: #fdf2f2;
-  opacity: 0.7;
+@keyframes pulse {
+  0%, 100% { border-color: var(--green-light); }
+  50% { border-color: var(--green-primary); }
 }
 
-.review-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
-  gap: 15px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.review-author {
+.reviewer-info {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0; /* Важно для правильного обрезания длинных имен */
+  gap: 16px;
+  align-items: flex-start;
+  flex: 1;
 }
 
-.author-avatar {
-  width: 40px;
-  height: 40px;
+.avatar {
+  width: 56px;
+  height: 56px;
   background: var(--gradient-green);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--white);
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-weight: 700;
+  font-size: 1.2rem;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--shadow-green);
 }
 
-.author-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0; /* Важно для правильного обрезания длинных имен */
+.info {
+  flex: 1;
 }
 
-.author-name {
-  font-weight: 600;
+.reviewer-name {
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--text-dark);
-  margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin-bottom: 8px;
+  line-height: 1.2;
 }
 
-.review-date {
-  font-size: 0.8rem;
-  color: var(--text-light);
-}
-
-.review-rating {
+.review-meta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  flex-shrink: 0;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-.rating-stars {
+.rating {
   display: flex;
   gap: 2px;
 }
 
 .star {
-  font-size: 1.1rem;
-  opacity: 0.3;
-  flex-shrink: 0;
+  font-size: 1.2rem;
 }
 
-.star.active {
-  opacity: 1;
+.star.filled {
+  color: var(--accent-warning);
 }
 
-.rating-value {
-  font-size: 0.8rem;
+.star:not(.filled) {
+  color: var(--green-light);
+}
+
+.review-date {
+  font-size: 0.95rem;
   color: var(--text-light);
   font-weight: 500;
 }
 
-.review-content {
+.admin-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--shadow-green-light);
+}
+
+.status-badge.approved {
+  background: linear-gradient(135deg, var(--accent-success) 0%, #2ecc71 100%);
+  color: var(--white);
+}
+
+.status-badge.pending {
+  background: linear-gradient(135deg, var(--accent-warning) 0%, #f39c12 100%);
+  color: var(--white);
+}
+
+.email-badge {
+  font-size: 0.85rem;
   color: var(--text-medium);
-  line-height: 1.6;
-  margin-bottom: 16px;
-  white-space: pre-wrap; /* Сохраняем переносы строк */
-  word-wrap: break-word; /* Переносим длинные слова */
-  overflow-wrap: break-word; /* Современная альтернатива word-wrap */
-  word-break: break-word; /* Принудительный перенос слов */
-  max-width: 100%; /* Ограничиваем ширину */
+  background: var(--green-bg-light);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  border: 1px solid var(--border-green);
+}
+
+.review-content {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: var(--green-bg);
+  border-radius: 16px;
+  border: 1px solid var(--border-green);
+}
+
+.review-content p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text-medium);
+  margin: 0;
 }
 
 .admin-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-green-light);
-  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-green);
 }
 
-.admin-status {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0; /* Важно для правильного переноса */
-}
-
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.status-badge.pending {
-  background: var(--accent-warning);
-  color: #000;
-}
-
-.status-badge.hidden {
-  background: var(--accent-error);
-  color: white;
-}
-
-.excursion-badge {
-  background: var(--green-light);
-  color: var(--text-dark);
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.admin-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0; /* Важно для правильного переноса */
-}
-
-.admin-btn {
-  padding: 6px 12px;
+.action-btn {
+  padding: 12px 24px;
   border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
+  transition: all 0.3s;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.approve-btn {
-  background: var(--green-lightest);
-  color: var(--green-darker);
+.toggle-btn {
+  background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+  color: var(--white);
+  box-shadow: 0 4px 12px var(--shadow-green);
 }
 
-.approve-btn:hover {
-  background: var(--green-light);
+.toggle-btn:hover {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-darker) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow-green-strong);
 }
 
-.hide-btn, .show-btn {
-  background: var(--green-bg-light);
-  color: var(--text-medium);
+.toggle-btn.hide {
+  background: linear-gradient(135deg, var(--accent-warning) 0%, #e67e22 100%);
 }
 
-.hide-btn:hover, .show-btn:hover {
-  background: var(--green-light);
+.toggle-btn.hide:hover {
+  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
 }
 
 .delete-btn {
-  background: #fdf2f2;
-  color: var(--accent-error);
+  background: linear-gradient(135deg, var(--accent-error) 0%, #c0392b 100%);
+  color: var(--white);
+  box-shadow: 0 4px 12px rgba(235, 87, 87, 0.2);
 }
 
 .delete-btn:hover {
-  background: #f5c6cb;
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(235, 87, 87, 0.3);
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
   .review-card {
-    padding: 20px;
+    padding: 24px;
   }
 
-  .review-header {
+  .card-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
   }
 
-  .review-rating {
-    align-self: flex-start;
+  .reviewer-info {
+    width: 100%;
+  }
+
+  .admin-badges {
+    width: 100%;
     flex-direction: row;
+    justify-content: flex-start;
     align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+
+  .reviewer-name {
+    font-size: 1.2rem;
+  }
+
+  .review-content {
+    padding: 16px;
+  }
+
+  .review-content p {
+    font-size: 1rem;
   }
 
   .admin-actions {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .admin-buttons {
+  .action-btn {
     width: 100%;
-    justify-content: flex-start;
-  }
-
-  .review-content {
-    font-size: 0.95rem; /* Немного уменьшаем шрифт на мобильных */
+    padding: 14px 20px;
   }
 }
 
 @media (max-width: 480px) {
   .review-card {
-    padding: 16px;
+    padding: 20px;
+    border-radius: 16px;
   }
 
-  .author-avatar {
-    width: 35px;
-    height: 35px;
+  .avatar {
+    width: 44px;
+    height: 44px;
     font-size: 1rem;
   }
 
+  .reviewer-name {
+    font-size: 1.1rem;
+  }
+
+  .review-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
   .review-content {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .review-content p {
+    font-size: 0.95rem;
+  }
+
+  .action-btn {
+    padding: 12px 16px;
     font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  .admin-btn {
-    padding: 5px 10px;
-    font-size: 0.75rem;
-  }
-
-  .status-badge, .excursion-badge {
-    font-size: 0.65rem;
-    padding: 3px 6px;
-  }
-}
-
-/* Дополнительные улучшения для очень длинного контента */
-@media (max-width: 360px) {
-  .review-content {
-    font-size: 0.85rem;
-  }
-
-  .admin-buttons {
-    gap: 6px;
-  }
-
-  .admin-btn {
-    padding: 4px 8px;
-    font-size: 0.7rem;
   }
 }
 </style>

@@ -28,7 +28,7 @@ export function logout(): void {
 
 export async function login(email: string, password: string): Promise<void> {
   try {
-    const response = await api.login({ email, password })
+    const response = await api.auth.login({ email, password })
 
     // Сохраняем токен
     localStorage.setItem('access_token', response.access_token)

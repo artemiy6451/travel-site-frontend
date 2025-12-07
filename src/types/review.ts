@@ -5,9 +5,7 @@ export interface Review {
   rating: number
   text: string
   created_at: string
-  is_approved: boolean
   is_active: boolean
-  excursion_id?: number
 }
 
 export interface ReviewCreate {
@@ -15,12 +13,22 @@ export interface ReviewCreate {
   email: string
   rating: number
   text: string
-  excursion_id?: number
 }
 
 export interface ReviewStats {
   total: number
   average_rating: number
-  approved_reviews: number
-  pending_reviews: number
+  rating_distribution: {
+    1: number
+    2: number
+    3: number
+    4: number
+    5: number
+  }
+  pending_count: number
+  approved_count: number
+}
+
+export interface ReviewAdmin extends Review {
+  email: string
 }

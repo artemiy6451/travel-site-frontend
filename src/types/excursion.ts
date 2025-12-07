@@ -8,7 +8,7 @@ export interface Excursion {
   duration: number
   people_amount: number
   people_left: number
-  bus_number?: number
+  bus_number: number
   is_active: boolean
   image_url: string
 }
@@ -22,6 +22,7 @@ export interface ExcursionCreate {
   duration: number
   people_amount: number
   people_left: number
+  bus_number: number
   is_active: boolean
   image_url: string
 }
@@ -30,17 +31,16 @@ export interface ExcursionUpdate {
   title?: string
   category?: string
   description?: string
-  short_description?: string
   date?: Date
   price?: number
   duration?: number
   people_amount?: number
   people_left?: number
+  bus_number?: number
   is_active?: boolean
   image_url?: string
 }
 
-// Добавляем типы для детальной информации
 export interface ItineraryItem {
   time?: string
   title: string
