@@ -8,37 +8,19 @@
         </BaseButton>
 
         <div class="nav-actions">
-          <BaseButton
-            variant="secondary"
-            size="sm"
-            icon="📤"
-            @click="handleShare"
-            class="nav-btn"
-            title="Поделиться"
-          />
+          <BaseButton variant="secondary" size="sm" icon="📤" @click="handleShare" class="nav-btn" title="Поделиться" />
         </div>
       </nav>
     </header>
 
-    <DataState
-      :loading="loading"
-      :error="error"
-      loading-message="Загружаем детали экскурсии..."
-      error-title="Что-то пошло не так"
-      @retry="loadExcursion"
-      :showRetry="showRetry"
-    >
+    <DataState :loading="loading" :error="error" loading-message="Загружаем детали экскурсии..."
+      error-title="Что-то пошло не так" @retry="loadExcursion" :showRetry="showRetry">
       <!-- Контент экскурсии -->
       <div v-if="excursion" class="modern-content">
         <!-- Hero секция -->
         <section class="hero-section">
           <div class="hero-image-container">
-            <img
-              :src="excursion.image_url"
-              :alt="excursion.title"
-              class="hero-image"
-              @error="handleImageError"
-            />
+            <img :src="excursion.image_url" :alt="excursion.title" class="hero-image" @error="handleImageError" />
             <div class="image-overlay"></div>
             <div class="hero-badge">
               <span class="badge-text">{{ getCategoryName(excursion.category) }}</span>
@@ -79,11 +61,8 @@
           <div v-if="hasRequirements(excursion)" class="requirements-section">
             <h2 class="section-title">🎯 Требования к участникам</h2>
             <div class="requirements-list">
-              <div
-                v-for="(requirement, index) in excursion.details?.requirements"
-                :key="index"
-                class="requirement-item"
-              >
+              <div v-for="(requirement, index) in excursion.details?.requirements" :key="index"
+                class="requirement-item">
                 <span class="requirement-icon">✓</span>
                 <span class="requirement-text">{{ requirement }}</span>
               </div>
@@ -94,11 +73,8 @@
           <div v-if="hasRecommendations(excursion)" class="recommendations-section">
             <h2 class="section-title">💡 Рекомендации</h2>
             <div class="recommendations-list">
-              <div
-                v-for="(recommendation, index) in excursion.details?.recommendations"
-                :key="index"
-                class="recommendation-item"
-              >
+              <div v-for="(recommendation, index) in excursion.details?.recommendations" :key="index"
+                class="recommendation-item">
                 <span class="recommendation-icon">💡</span>
                 <span class="recommendation-text">{{ recommendation }}</span>
               </div>
@@ -122,26 +98,14 @@
         <div v-else class="spots-left sold-out">Мест нет</div>
       </div>
 
-      <BaseButton
-        variant="primary"
-        size="lg"
-        @click="handleBooking"
-        class="fab-button"
-        icon="🎫"
-        full-width
-        :disabled="excursion.people_left === 0"
-      >
+      <BaseButton variant="primary" size="lg" @click="handleBooking" class="fab-button" icon="🎫" full-width
+        :disabled="excursion.people_left === 0">
         {{ excursion.people_left > 0 ? 'Забронировать' : 'Мест нет' }}
       </BaseButton>
 
       <!-- Модальное окно -->
-      <BookingForm
-        :visible="showBookingModal"
-        :excursion="excursion"
-        @update:visible="showBookingModal = $event"
-        @success="handleBookingSuccess"
-        @close="handleBookingClose"
-      />
+      <BookingForm :visible="showBookingModal" :excursion="excursion" @update:visible="showBookingModal = $event"
+        @success="handleBookingSuccess" @close="handleBookingClose" />
     </div>
   </div>
 </template>
@@ -159,6 +123,7 @@ import ExcursionDescription from '@/components/Excursion/ExcursionDescription.vu
 import ExcursionIncluded from '@/components/Excursion/ExcursionIncluded.vue'
 import ExcursionItinerary from '@/components/Excursion/ExcursionItinerary.vue'
 import BookingForm from '@/components/UI/BookingForm.vue'
+import type { BookingCreate } from '@/types/booking'
 
 const route = useRoute()
 const router = useRouter()
@@ -176,6 +141,7 @@ const excursion = ref<ExcursionFullInfo>({
   is_active: true,
   image_url: '',
   details: undefined,
+  bus_number: 0,
 })
 
 const loading = ref(false)
@@ -209,10 +175,14 @@ const loadExcursion = async () => {
 
 // Обработка бронирования
 const showBookingModal = ref(false)
-const handleBooking = (booking: any) => {
+const handleBooking = () => {
   if (!excursion.value || excursion.value.people_left === 0) return
   // window.open('https://vk.com/vvvectaa', '_blank')
   showBookingModal.value = true
+}
+
+const handleBookingSuccess = async (new_booking: BookingCreate) => {
+
 }
 
 const handleBookingClose = () => {
@@ -320,7 +290,6 @@ onMounted(() => {
 .modern-header {
   position: sticky;
   top: 0;
-  z-index: 100;
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid #f0f0f0;
 }

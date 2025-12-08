@@ -31,7 +31,7 @@
         </div>
 
         <!-- Форма бронирования -->
-        <form @submit.prevent="submitBooking" class="booking-form">
+        <form @submit.prevent="submitBooking(formData)" class="booking-form">
           <div class="form-section">
             <h3 class="section-title">Контактные данные</h3>
 
@@ -155,6 +155,7 @@
 import { ref, computed, watch } from 'vue'
 import type { BookingCreate } from '@/types/booking'
 import type { Excursion } from '@/types/excursion'
+import { api } from '@/utils/api'
 
 interface Props {
   visible: boolean
@@ -175,12 +176,11 @@ const error = ref('')
 
 // Данные формы
 const formData = ref<BookingCreate>({
-  excursion_id: 0,
+  excursion_id: 1,
   first_name: '',
   last_name: '',
   phone_number: '',
   total_people: 1,
-  children: 0
 })
 
 // Следим за изменением экскурсии
@@ -201,8 +201,7 @@ const isFormValid = computed(() => {
          formData.value.last_name.trim() &&
          formData.value.phone_number.replace(/\D/g, '').length >= 11 &&
          formData.value.total_people > 0 &&
-         formData.value.total_people <= maxPeople.value &&
-         (formData.value.children || 0) <= formData.value.total_people
+         formData.value.total_people <= maxPeople.value
 })
 
 // Расчет стоимости
@@ -210,25 +209,12 @@ const adultsCount = computed(() => {
   return formData.value.total_people - (formData.value.children || 0)
 })
 
-const childrenCount = computed(() => {
-  return formData.value.children || 0
-})
-
-const childrenPricePerPerson = computed(() => {
-  // Предположим, что дети стоят 70% от взрослой цены
-  return Math.round((props.excursion?.price || 0) * 0.7)
-})
-
 const adultsPrice = computed(() => {
   return adultsCount.value * (props.excursion?.price || 0)
 })
 
-const childrenPrice = computed(() => {
-  return childrenCount.value * childrenPricePerPerson.value
-})
-
 const totalPrice = computed(() => {
-  return adultsPrice.value + childrenPrice.value
+  return adultsPrice.value
 })
 
 // Методы
@@ -245,18 +231,6 @@ const decrementTotal = () => {
     if ((formData.value.children || 0) >= formData.value.total_people) {
       formData.value.children = formData.value.total_people - 1
     }
-  }
-}
-
-const incrementChildren = () => {
-  if ((formData.value.children || 0) < formData.value.total_people) {
-    formData.value.children = (formData.value.children || 0) + 1
-  }
-}
-
-const decrementChildren = () => {
-  if (formData.value.children && formData.value.children > 0) {
-    formData.value.children--
   }
 }
 
@@ -320,13 +294,15 @@ const formatDuration = (minutes: number): string => {
 }
 
 // Отправка формы
-const submitBooking = async () => {
+const submitBooking = async (new_booking: BookingCreate) => {
   if (!isFormValid.value) return
 
   loading.value = true
   error.value = ''
 
   try {
+
+     await api.booking.createBooking(new_booking)
 
     const booking = true
     emit('success', booking)
@@ -413,7 +389,7 @@ const closeModal = () => {
   border-radius: 20px 20px 0 0;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1000;
 }
 
 .modal-title {

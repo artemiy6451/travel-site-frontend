@@ -6,7 +6,7 @@ export interface Booking {
   phone_number: string
   total_people: number
   children?: number
-  created_at?: string
+  is_active?: boolean // если toggle меняет этот статус
 }
 
 export interface BookingCreate {
