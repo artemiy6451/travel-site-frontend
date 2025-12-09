@@ -622,7 +622,7 @@ const handleSubmit = async () => {
     price: formData.value.price,
     duration: formData.value.duration,
     people_amount: formData.value.people_amount,
-    people_left: formData.value.people_amount,
+    people_left: formData.value.people_left,
     is_active: formData.value.is_active,
     image_url: finalImageUrl,
     bus_number: formData.value.bus_number,
