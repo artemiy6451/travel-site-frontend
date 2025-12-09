@@ -38,6 +38,7 @@
           <router-link to="/" class="nav_link">Главная</router-link>
           <router-link to="/about" class="nav_link">О нас</router-link>
           <router-link to="/reviews" class="nav_link">Отзывы</router-link>
+          <router-link v-if="isAdmin" to="/admin" class="nav_link">Админ панель</router-link>
         </nav>
       </div>
 
@@ -76,9 +77,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { api } from '@/utils/api'
+import { onMounted, ref } from 'vue'
+const isAdmin = ref<boolean>(false)
 
 const currentYear = ref(new Date().getFullYear())
+
+onMounted(async () =>
+  isAdmin.value = await api.auth.checkAdminAccess()
+)
+
 </script>
 
 <style scoped>
