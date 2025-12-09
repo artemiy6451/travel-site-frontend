@@ -132,8 +132,6 @@ const isAdmin = ref(false)
 const currentTab = ref<'all' | 'pending' | 'approved'>('approved')
 
 // Пагинация (только для публичных отзывов)
-const limit = 10
-const skip = ref(0)
 const hasMore = ref(true)
 
 // Computed
@@ -173,7 +171,6 @@ const loadStats = async () => {
 const loadApprovedReviews = async (reset = false) => {
   if (reset) {
     approvedReviews.value = []
-    skip.value = 0
     hasMore.value = true
   }
 

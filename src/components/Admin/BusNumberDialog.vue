@@ -69,7 +69,7 @@ const busNumber = ref<number>(0)
 
 // Валидация формы
 const isValid = computed(() => {
-  return busNumber.value > 0
+  return busNumber.value >= 0
 })
 
 // Сброс формы при открытии/закрытии диалога

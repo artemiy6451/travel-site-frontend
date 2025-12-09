@@ -328,7 +328,7 @@
                     />
                   </div>
                   <div class="form-group">
-                    <label>Заголовок *</label>
+                    <label>Заголовок</label>
                     <input
                       v-model="item.title"
                       type="text"

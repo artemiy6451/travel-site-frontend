@@ -124,6 +124,7 @@ import ExcursionIncluded from '@/components/Excursion/ExcursionIncluded.vue'
 import ExcursionItinerary from '@/components/Excursion/ExcursionItinerary.vue'
 import BookingForm from '@/components/UI/BookingForm.vue'
 import type { BookingCreate } from '@/types/booking'
+import { sendMetrik } from '@/utils/metrika'
 
 const route = useRoute()
 const router = useRouter()
@@ -163,10 +164,19 @@ const loadExcursion = async () => {
 
   try {
     // Используем новый метод для получения полной информации
-    excursion.value = await api.excursions.getExcursionFull(excursionId)
+    excursion.value = await api.excursions.getExcursion(excursionId)
+    if (!excursion.value.is_active) {
+      router.replace("/not-found")
+    }
+
+    try {
+      excursion.value.details = await api.excursions.getExcursionDetails(excursionId)
+    } catch (detailsErr: any) {
+      console.warn('Детали экскурсии не найдены, используем базовую информацию:', detailsErr)
+    }
   } catch (err: any) {
     if (err.message === 'Excursion not found' || err.response?.status === 404) {
-      error.value = 'Экскурсия не найдена'
+      router.replace("/not-found")
     }
   } finally {
     loading.value = false
@@ -179,10 +189,13 @@ const handleBooking = () => {
   if (!excursion.value || excursion.value.people_left === 0) return
   // window.open('https://vk.com/vvvectaa', '_blank')
   showBookingModal.value = true
+  sendMetrik('booking-start')
 }
 
 const handleBookingSuccess = async (new_booking: BookingCreate) => {
-
+  // Показываем уведомление
+  alert('✅ Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.')
+  sendMetrik('booking-end')
 }
 
 const handleBookingClose = () => {
@@ -301,6 +314,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 10;
 }
 
 :deep(.nav-back.base-button) {

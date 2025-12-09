@@ -38,40 +38,21 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="firstName" class="form-label">Имя *</label>
-                <input
-                  id="firstName"
-                  v-model="formData.first_name"
-                  type="text"
-                  class="form-input"
-                  required
-                  placeholder="Введите ваше имя"
-                >
+                <input id="firstName" v-model="formData.first_name" type="text" class="form-input" required
+                  placeholder="Введите ваше имя">
               </div>
 
               <div class="form-group">
                 <label for="lastName" class="form-label">Фамилия *</label>
-                <input
-                  id="lastName"
-                  v-model="formData.last_name"
-                  type="text"
-                  class="form-input"
-                  required
-                  placeholder="Введите вашу фамилию"
-                >
+                <input id="lastName" v-model="formData.last_name" type="text" class="form-input" required
+                  placeholder="Введите вашу фамилию">
               </div>
             </div>
 
             <div class="form-group">
               <label for="phone" class="form-label">Номер телефона *</label>
-              <input
-                id="phone"
-                v-model="formData.phone_number"
-                type="tel"
-                class="form-input"
-                required
-                placeholder="+7 (XXX) XXX-XX-XX"
-                @input="formatPhone"
-              >
+              <input id="phone" v-model="formData.phone_number" type="tel" class="form-input" required
+                placeholder="+7 (XXX) XXX-XX-XX" @input="formatPhone">
               <div class="input-hint">Формат: +7 XXX XXX-XX-XX</div>
             </div>
           </div>
@@ -83,21 +64,13 @@
               <div class="people-group">
                 <label class="people-label">Всего человек *</label>
                 <div class="people-counter">
-                  <button
-                    type="button"
-                    class="counter-btn minus"
-                    @click="decrementTotal"
-                    :disabled="formData.total_people <= 1"
-                  >
+                  <button type="button" class="counter-btn minus" @click="decrementTotal"
+                    :disabled="formData.total_people <= 1">
                     −
                   </button>
                   <span class="people-count">{{ formData.total_people }}</span>
-                  <button
-                    type="button"
-                    class="counter-btn plus"
-                    @click="incrementTotal"
-                    :disabled="formData.total_people >= maxPeople"
-                  >
+                  <button type="button" class="counter-btn plus" @click="incrementTotal"
+                    :disabled="formData.total_people >= maxPeople">
                     +
                   </button>
                 </div>
@@ -120,27 +93,12 @@
             </div>
           </div>
 
-          <!-- Уведомление о свободных местах -->
-          <div v-if="excursion && excursion.people_left < formData.total_people" class="warning-message">
-            ⚠️ На выбранную дату осталось только {{ excursion.people_left }} мест.
-            Свяжитесь с нами для уточнения альтернативных вариантов.
-          </div>
-
           <!-- Кнопки -->
           <div class="form-actions">
-            <button
-              type="button"
-              class="btn-secondary"
-              @click="closeModal"
-              :disabled="loading"
-            >
+            <button type="button" class="btn-secondary" @click="closeModal" :disabled="loading">
               Отмена
             </button>
-            <button
-              type="submit"
-              class="btn-primary"
-              :disabled="loading || !isFormValid"
-            >
+            <button type="submit" class="btn-primary" :disabled="loading || !isFormValid">
               <span v-if="loading">Отправка...</span>
               <span v-else>Забронировать</span>
             </button>
@@ -198,10 +156,10 @@ const maxPeople = computed(() => {
 // Валидация формы
 const isFormValid = computed(() => {
   return formData.value.first_name.trim() &&
-         formData.value.last_name.trim() &&
-         formData.value.phone_number.replace(/\D/g, '').length >= 11 &&
-         formData.value.total_people > 0 &&
-         formData.value.total_people <= maxPeople.value
+    formData.value.last_name.trim() &&
+    formData.value.phone_number.replace(/\D/g, '').length >= 11 &&
+    formData.value.total_people > 0 &&
+    formData.value.total_people <= maxPeople.value
 })
 
 // Расчет стоимости
@@ -302,14 +260,11 @@ const submitBooking = async (new_booking: BookingCreate) => {
 
   try {
 
-     await api.booking.createBooking(new_booking)
+    await api.booking.createBooking(new_booking)
 
     const booking = true
     emit('success', booking)
     closeModal()
-
-    // Показываем уведомление
-    alert('✅ Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.')
 
     // Сбрасываем форму
     resetForm()
@@ -373,6 +328,7 @@ const closeModal = () => {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -664,7 +620,8 @@ const closeModal = () => {
   border-top: 1px solid var(--border-green-light);
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   flex: 1;
   padding: 14px 24px;
   border-radius: 8px;
@@ -697,7 +654,8 @@ const closeModal = () => {
   border-color: var(--green-primary);
 }
 
-.btn-primary:disabled, .btn-secondary:disabled {
+.btn-primary:disabled,
+.btn-secondary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
