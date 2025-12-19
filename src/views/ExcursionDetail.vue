@@ -17,10 +17,17 @@
       error-title="Что-то пошло не так" @retry="loadExcursion" :showRetry="showRetry">
       <!-- Контент экскурсии -->
       <div v-if="excursion" class="modern-content">
-        <!-- Hero секция -->
+        <!-- Hero секция со скроллом фоток -->
         <section class="hero-section">
           <div class="hero-image-container">
-            <img :src="excursion.image_url" :alt="excursion.title" class="hero-image" @error="handleImageError" />
+            <ImageCarousel
+              :images="allImages"
+              :alt-text="excursion.title" height="60vh"
+              :show-indicators="hasMultipleImages"
+              :show-navigation="hasMultipleImages"
+              :initial-slide="currentImageIndex"
+            />
+
             <div class="image-overlay"></div>
             <div class="hero-badge">
               <span class="badge-text">{{ getCategoryName(excursion.category) }}</span>
@@ -30,15 +37,11 @@
           <div class="hero-content">
             <h1 class="hero-title">{{ excursion.title }}</h1>
             <div class="hero-meta">
-              <div class="meta-item">
-                <span class="meta-icon">📍</span>
-                <span class="meta-text">{{ getCategoryName(excursion.category) }} тур</span>
-              </div>
             </div>
           </div>
         </section>
 
-        <!-- Основной контент -->
+        <!-- Остальной контент без изменений -->
         <main class="main-content">
           <!-- Быстрые факты -->
           <ExcursionFacts :excursion="excursion" />
@@ -111,10 +114,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/utils/api'
-import { handleImageError } from '@/utils/image'
 import { type ExcursionFullInfo } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import DataState from '@/components/UI/DataState.vue'
@@ -123,6 +125,7 @@ import ExcursionDescription from '@/components/Excursion/ExcursionDescription.vu
 import ExcursionIncluded from '@/components/Excursion/ExcursionIncluded.vue'
 import ExcursionItinerary from '@/components/Excursion/ExcursionItinerary.vue'
 import BookingForm from '@/components/UI/BookingForm.vue'
+import ImageCarousel from '@/components/UI/ImageCarousel.vue'
 import type { BookingCreate } from '@/types/booking'
 import { sendMetrik } from '@/utils/metrika'
 
@@ -140,7 +143,7 @@ const excursion = ref<ExcursionFullInfo>({
   people_amount: 0,
   people_left: 0,
   is_active: true,
-  image_url: '',
+  images: [],
   details: undefined,
   bus_number: 0,
 })
@@ -148,6 +151,16 @@ const excursion = ref<ExcursionFullInfo>({
 const loading = ref(false)
 const error = ref('')
 const showRetry = ref(false)
+
+// Переменные для скролла фоток
+const currentImageIndex = ref(0)
+
+// Все изображения для скролла
+const allImages = computed(() => {
+  return excursion.value.images || []
+})
+
+const hasMultipleImages = computed(() => allImages.value.length > 1)
 
 // Загрузка данных экскурсии
 const loadExcursion = async () => {
@@ -166,7 +179,7 @@ const loadExcursion = async () => {
     // Используем новый метод для получения полной информации
     excursion.value = await api.excursions.getExcursion(excursionId)
     if (!excursion.value.is_active) {
-      router.replace("/not-found")
+      router.replace('/not-found')
     }
 
     try {
@@ -176,7 +189,7 @@ const loadExcursion = async () => {
     }
   } catch (err: any) {
     if (err.message === 'Excursion not found' || err.response?.status === 404) {
-      router.replace("/not-found")
+      router.replace('/not-found')
     }
   } finally {
     loading.value = false
@@ -351,7 +364,7 @@ onMounted(() => {
   border-color: #d1d5db;
 }
 
-/* Hero секция */
+/* Hero секция со скроллом */
 .hero-section {
   position: relative;
 }
@@ -363,12 +376,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .image-overlay {
   position: absolute;
   top: 0;
@@ -376,6 +383,8 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3));
+  z-index: 1;
+  pointer-events: none;
 }
 
 .hero-badge {
@@ -389,6 +398,63 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 600;
   color: #333;
+  z-index: 2;
+}
+
+/* Индикаторы точек */
+.image-indicators {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 2;
+}
+
+.indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.indicator-dot:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.3);
+}
+
+.indicator-dot.active {
+  background: white;
+  transform: scale(1.3);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Кнопки навигации */
+.scroll-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #333;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.3s ease;
+  opacity: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .hero-content {
@@ -400,6 +466,8 @@ onMounted(() => {
   color: white;
   max-width: 1200px;
   margin: 0 auto;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .hero-title {
@@ -407,6 +475,7 @@ onMounted(() => {
   font-weight: 700;
   margin-bottom: 15px;
   line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .hero-meta {
@@ -421,6 +490,7 @@ onMounted(() => {
   gap: 8px;
   font-size: 14px;
   opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Основной контент */
@@ -429,6 +499,9 @@ onMounted(() => {
   margin: 0 auto;
   padding: 40px 20px 40px;
 }
+
+/* Остальные стили остаются без изменений */
+/* ... существующие стили для остальных секций ... */
 
 /* Секция места сбора */
 .meeting-point-section {
@@ -534,6 +607,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  z-index: 5;
 }
 
 .price-display {
@@ -586,6 +660,41 @@ onMounted(() => {
     font-size: 2rem;
   }
 
+  .hero-image-container {
+    min-height: 300px;
+  }
+
+  .scroll-nav-btn {
+    opacity: 0.7;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .scroll-nav-btn.prev-btn {
+    left: 10px;
+  }
+
+  .scroll-nav-btn.next-btn {
+    right: 10px;
+  }
+
+  .image-counter {
+    top: 15px;
+    left: 15px;
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .image-indicators {
+    bottom: 20px;
+  }
+
+  .indicator-dot {
+    width: 8px;
+    height: 8px;
+  }
+
   .fab-container {
     padding: 12px 16px;
   }
@@ -608,6 +717,10 @@ onMounted(() => {
     font-size: 1.75rem;
   }
 
+  .hero-image-container {
+    min-height: 250px;
+  }
+
   .hero-meta {
     flex-direction: column;
     gap: 8px;
@@ -625,6 +738,14 @@ onMounted(() => {
   :deep(.nav-btn.base-button) {
     width: 36px;
     height: 36px;
+  }
+
+  .scroll-nav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    opacity: 0.8;
+    /* Всегда показываем на мобильных */
   }
 
   .meeting-point-content,

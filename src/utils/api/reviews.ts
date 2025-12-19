@@ -5,8 +5,8 @@ export class ReviewsApi extends BaseApi {
   async getApprovedReviews(): Promise<Review[]> {
     const response = await this.request<Review[]>('/review/')
     // Сортируем по дате создания на фронте (от новых к старым)
-    return response.sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return response.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     )
   }
 
@@ -30,8 +30,8 @@ export class ReviewsApi extends BaseApi {
       },
     })
     // Сортируем на фронте
-    return response.sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return response.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     )
   }
 
@@ -42,8 +42,8 @@ export class ReviewsApi extends BaseApi {
       },
     })
     // Сортируем на фронте
-    return response.sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return response.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     )
   }
 

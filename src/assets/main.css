@@ -3,7 +3,8 @@
 
 #app {
   min-height: 100vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('@/assets/main.jpg?v=9');
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('@/assets/main.jpg?v=10');
   background-size: cover; /* растягивает картинку на весь экран */
   background-position: center; /* центрирует картинку */
   background-repeat: no-repeat; /* предотвращает повторение */

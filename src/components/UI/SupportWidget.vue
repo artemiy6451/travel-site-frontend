@@ -8,16 +8,29 @@
       <span class="support-time">🕒 09:00–21:00 МСК</span>
       <a href="tel:+79787005859" class="support-link">📞 +7 (978) 700-58-59</a>
       <div class="buttons">
-        <a href="https://vk.com/vvvectaa" target="_blank" class="btn vk" @click="sendMetrik('vk-click')"> ВКонтакте </a>
-        <a href="https://t.me/vvvecta" target="_blank" class="btn telegram" @click="sendMetrik('tg-click')"> Telegram </a>
+        <a
+          href="https://vk.com/vvvectaa"
+          target="_blank"
+          class="btn vk"
+          @click="sendMetrik('vk-click')"
+        >
+          ВКонтакте
+        </a>
+        <a
+          href="https://t.me/vvvecta"
+          target="_blank"
+          class="btn telegram"
+          @click="sendMetrik('tg-click')"
+        >
+          Telegram
+        </a>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { sendMetrik } from '@/utils/metrika';
-
+import { sendMetrik } from '@/utils/metrika'
 </script>
 
 <style scoped>

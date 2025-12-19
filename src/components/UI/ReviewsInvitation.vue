@@ -8,8 +8,8 @@
           <div class="content-wrapper">
             <h2 class="title">Что говорят наши гости</h2>
             <p class="subtitle">
-              Присоединяйтесь к сотням довольных путешественников, которые уже открыли
-              для себя настоящий Крым вместе с нами
+              Присоединяйтесь к сотням довольных путешественников, которые уже открыли для себя
+              настоящий Крым вместе с нами
             </p>
 
             <!-- Статистика -->
@@ -115,6 +115,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/utils/api'
 import type { Review, ReviewStats } from '@/types/review'
+import { useRouter } from 'vue-router'
 
 const stats = ref<ReviewStats | null>(null)
 const sampleReviews = ref<Review[]>([])
@@ -138,7 +139,7 @@ const loadData = async () => {
 const getInitials = (name: string): string => {
   return name
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase())
+    .map((word) => word.charAt(0).toUpperCase())
     .join('')
     .substring(0, 2)
 }
@@ -152,7 +153,7 @@ const formatDate = (dateString: string): string => {
   const date = new Date(dateString)
   return date.toLocaleDateString('ru-RU', {
     day: 'numeric',
-    month: 'short'
+    month: 'short',
   })
 }
 
@@ -492,8 +493,12 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {

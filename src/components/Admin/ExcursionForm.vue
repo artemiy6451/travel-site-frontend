@@ -87,24 +87,84 @@
                 :disabled="loading"
               />
             </div>
+          </div>
 
-            <!-- Загрузка изображения -->
-            <div class="form-group">
-              <label>Изображение *</label>
-              <div class="image-upload-section">
-                <!-- Превью изображения -->
-                <div v-if="imagePreview" class="image-preview">
-                  <img :src="imagePreview" alt="Preview" class="preview-image" />
-                  <button
-                    type="button"
-                    class="remove-image-btn"
-                    @click="removeImage"
-                    :disabled="loading"
-                  >
-                    ×
-                  </button>
+          <!-- Раздел для фотографий -->
+          <div class="form-group">
+            <label>Фотографии экскурсии *</label>
+            <div class="photos-section">
+              <!-- Карусель для предпросмотра фоток -->
+              <div v-if="uploadedImages.length > 0" class="photos-carousel">
+                <h4>Загруженные фотографии ({{ uploadedImages.length }})</h4>
+
+                <!-- Компонент карусели с возможностью удаления -->
+                <div class="image-carousel-admin">
+                  <div class="carousel-scroll-container">
+                    <div
+                      class="carousel-scroll-track"
+                      :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
+                    >
+                      <div
+                        v-for="(image, index) in uploadedImages"
+                        :key="image.id"
+                        class="carousel-image-item"
+                      >
+                        <img
+                          :src="image.url"
+                          :alt="`Фото ${index + 1}`"
+                          class="carousel-image"
+                        />
+
+                        <!-- Кнопка удаления -->
+                        <button
+                          type="button"
+                          class="delete-image-btn"
+                          @click="removeUploadedImage(index)"
+                          :disabled="uploadedImages.length <= 1"
+                          title="Удалить фото"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Индикаторы -->
+                    <div class="carousel-indicators" v-if="uploadedImages.length > 1">
+                      <button
+                        v-for="(_, index) in uploadedImages"
+                        :key="index"
+                        class="indicator-dot"
+                        type="button"
+                        :class="{ active: currentImageIndex === index }"
+                        @click.stop="goToImage(index)"
+                      ></button>
+                    </div>
+
+                    <!-- Кнопки навигации -->
+                    <button
+                      v-if="currentImageIndex > 0"
+                      class="carousel-nav-btn prev-btn"
+                      @click.stop="prevImage"
+                      title="Предыдущее фото"
+                      type="button"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      v-if="currentImageIndex < uploadedImages.length - 1"
+                      class="carousel-nav-btn next-btn"
+                      @click.stop="nextImage"
+                      title="Следующее фото"
+                      type="button"
+                    >
+                      ›
+                    </button>
+                  </div>
                 </div>
+              </div>
 
+              <!-- Загрузка новых фоток -->
+              <div class="image-upload-section">
                 <!-- Кнопки загрузки -->
                 <div class="upload-options">
                   <input
@@ -112,6 +172,7 @@
                     ref="fileInput"
                     accept="image/*"
                     @change="handleFileSelect"
+                    multiple
                     class="file-input"
                     :disabled="loading"
                   />
@@ -123,30 +184,8 @@
                       @click="triggerFileInput"
                       :disabled="loading"
                     >
-                      📁 Выбрать файл
+                      📁 Выбрать файлы
                     </button>
-
-                    <button
-                      type="button"
-                      class="upload-btn secondary"
-                      @click="openCamera"
-                      :disabled="!supportsCamera || loading"
-                      :title="!supportsCamera ? 'Камера не поддерживается' : 'Сделать фото'"
-                    >
-                      📷 Сделать фото
-                    </button>
-                  </div>
-
-                  <!-- Или URL -->
-                  <div class="url-option">
-                    <span class="url-divider">или введите URL</span>
-                    <input
-                      v-model="formData.image_url"
-                      type="text"
-                      placeholder="https://example.com/image.jpg"
-                      :disabled="loading || !!uploadedImage"
-                      class="url-input"
-                    />
                   </div>
                 </div>
 
@@ -160,6 +199,7 @@
                   <small>• Поддерживаемые форматы: JPG, PNG, WebP</small>
                   <small>• Максимальный размер: 5MB</small>
                   <small>• Рекомендуемое соотношение: 16:9</small>
+                  <small>• Первое фото будет главным</small>
                 </div>
               </div>
             </div>
@@ -380,7 +420,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
-import { type Excursion, type ExcursionCreate } from '@/types/excursion'
+import { type Excursion, type ExcursionCreate, type ExcursionImage } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import { api } from '@/utils/api'
 
@@ -408,23 +448,21 @@ const emit = defineEmits<Emits>()
 // Рефы
 const fileInput = ref<HTMLInputElement | null>(null)
 
-// Состояния загрузки изображений
-const uploadedImage = ref<File | null>(null)
-const imagePreview = ref<string>('')
+// Данные для фотографий
+const uploadedImages = ref<ExcursionImage[]>([]) // Массив загруженных изображений
+const currentImageIndex = ref(0)
 const uploadStatus = ref<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
-const supportsCamera = ref(false)
-const imageUploading = ref(false) // Новое состояние для загрузки изображения
+const imageUploading = ref(false)
+
+// Массивы для отслеживания изменений
+const imagesToDelete = ref<number[]>([]) // ID изображений для удаления
+const imagesToAdd = ref<File[]>([]) // Новые файлы для загрузки
 
 // Вычисляемое свойство для текста загрузки
 const getLoadingText = computed(() => {
-  if (imageUploading.value) return 'Загрузка изображения...'
+  if (imageUploading.value) return 'Загрузка изображений...'
   if (props.loading) return 'Сохранение...'
   return 'Загрузка...'
-})
-
-// Проверка поддержки камеры
-onMounted(() => {
-  supportsCamera.value = !!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia
 })
 
 // Данные формы
@@ -438,7 +476,6 @@ const formData = ref({
   people_amount: 0,
   people_left: 0,
   is_active: true,
-  image_url: '',
   bus_number: 0,
 
   details: {
@@ -462,85 +499,190 @@ const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
-// Обработка выбора файла
-const handleFileSelect = (event: Event) => {
+// Обработка выбора файлов
+const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
+  const files = Array.from(target.files || [])
 
-  if (file) {
-    validateAndSetImage(file)
+  if (files.length === 0) return
+
+  let successfulValidations = 0
+
+  for (const file of files) {
+    try {
+      // Валидация файла
+      if (!validateImageFile(file)) continue
+
+      // Создаем временный URL для предпросмотра
+      const previewUrl = URL.createObjectURL(file)
+
+      // Добавляем во временный массив для предпросмотра
+      uploadedImages.value.push({
+        id: -Date.now() - successfulValidations, // Отрицательный ID для временных изображений
+        url: previewUrl,
+        excursion_id: props.editingCard?.id || 0,
+        is_temporary: true,
+        file: file
+      })
+
+      // Добавляем в массив для загрузки
+      imagesToAdd.value.push(file)
+
+      successfulValidations++
+
+    } catch (error) {
+      console.error('File validation error:', error)
+      showUploadStatus('error', `Ошибка валидации файла ${file.name}`)
+    }
+  }
+
+  if (successfulValidations > 0) {
+    showUploadStatus('success', `Добавлено ${successfulValidations} изображений для загрузки`)
+  }
+
+  // Сброс input файла
+  if (target) {
+    target.value = ''
   }
 }
 
-// Валидация и установка изображения
-const validateAndSetImage = (file: File) => {
-  // Проверка типа файла
+// Валидация изображения
+const validateImageFile = (file: File): boolean => {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
   if (!validTypes.includes(file.type)) {
-    showUploadStatus('error', 'Неподдерживаемый формат файла. Используйте JPG, PNG или WebP.')
-    return
+    showUploadStatus('error', `Неподдерживаемый формат файла: ${file.name}. Используйте JPG, PNG или WebP.`)
+    return false
   }
 
   // Проверка размера файла (5MB)
   const maxSize = 5 * 1024 * 1024
   if (file.size > maxSize) {
-    showUploadStatus('error', 'Файл слишком большой. Максимальный размер: 5MB.')
-    return
+    showUploadStatus('error', `Файл слишком большой: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB). Максимум: 5MB`)
+    return false
   }
 
-  // Создание превью
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    imagePreview.value = e.target?.result as string
-    uploadedImage.value = file
-    formData.value.image_url = '' // Очищаем URL при загрузке файла
-    showUploadStatus('success', 'Изображение готово к загрузке')
-  }
-  reader.onerror = () => {
-    showUploadStatus('error', 'Ошибка при чтении файла')
-  }
-  reader.readAsDataURL(file)
+  return true
 }
 
-// Открытие камеры
-const openCamera = async () => {
-  if (!supportsCamera.value) {
-    showUploadStatus('error', 'Ваше устройство не поддерживает камеру')
+// Удаление загруженного изображения
+const removeUploadedImage = async (index: number) => {
+  const image = uploadedImages.value[index]
+
+  // Проверяем, можно ли удалить
+  if (uploadedImages.value.length <= 1) {
+    showUploadStatus('error', 'Необходимо хотя бы одно изображение')
     return
   }
+
+  // Если это существующее изображение (имеет положительный ID)
+  if (image.id > 0) {
+    // Добавляем в список для удаления
+    imagesToDelete.value.push(image.id)
+  }
+
+  // Если это временное изображение (отрицательный ID)
+  if (image.id < 0) {
+    // Находим и удаляем соответствующий файл из массива для загрузки
+    const fileIndex = imagesToAdd.value.findIndex((_, i) => {
+      const tempImage = uploadedImages.value.find(img => img.id < 0 && img.file)
+      return tempImage?.id === image.id
+    })
+    if (fileIndex !== -1) {
+      imagesToAdd.value.splice(fileIndex, 1)
+    }
+  }
+
+  // Удаляем из отображаемого массива
+  uploadedImages.value.splice(index, 1)
+
+  // Корректируем текущий индекс если нужно
+  if (currentImageIndex.value >= uploadedImages.value.length && uploadedImages.value.length > 0) {
+    currentImageIndex.value = uploadedImages.value.length - 1
+  } else if (uploadedImages.value.length === 0) {
+    currentImageIndex.value = 0
+  }
+
+
+  showUploadStatus('info', 'Изображение помечено для удаления')
+}
+
+// Загрузка новых изображений на сервер
+const uploadNewImages = async (excursionId: number): Promise<ExcursionImage[]> => {
+  if (imagesToAdd.value.length === 0) return []
+
+  imageUploading.value = true
+  showUploadStatus('info', `Загрузка ${imagesToAdd.value.length} изображений...`)
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+    const uploadedImagesData = await api.excursions.bulkAddExcursionImages(excursionId, imagesToAdd.value)
 
-    // Здесь можно реализовать интерфейс для съемки фото
-    // Для простоты используем input с capture
-    if (fileInput.value) {
-      fileInput.value.setAttribute('capture', 'environment')
-      fileInput.value.click()
-      // Сбрасываем атрибут после использования
-      setTimeout(() => {
-        if (fileInput.value) {
-          fileInput.value.removeAttribute('capture')
-        }
-      }, 100)
-    }
+    // Обновляем uploadedImages с данными с сервера
+    uploadedImagesData.forEach((newImage, index) => {
+      const tempImageIndex = uploadedImages.value.findIndex(img =>
+        img.id < 0 && img.file === imagesToAdd.value[index]
+      )
+      if (tempImageIndex !== -1) {
+        uploadedImages.value[tempImageIndex] = newImage
+      }
+    })
 
-    // Останавливаем поток
-    stream.getTracks().forEach((track) => track.stop())
+    // Очищаем временный массив
+    imagesToAdd.value = []
+
+    showUploadStatus('success', 'Изображения успешно загружены')
+    return uploadedImagesData
   } catch (error) {
-    console.error('Camera error:', error)
-    showUploadStatus('error', 'Не удалось получить доступ к камере')
+    console.error('Error uploading images:', error)
+    showUploadStatus('error', 'Ошибка загрузки изображений')
+    throw error
+  } finally {
+    imageUploading.value = false
   }
 }
 
-// Удаление изображения
-const removeImage = () => {
-  uploadedImage.value = null
-  imagePreview.value = ''
-  if (fileInput.value) {
-    fileInput.value.value = ''
+// Удаление изображений с сервера
+const deleteMarkedImages = async (): Promise<void> => {
+  if (imagesToDelete.value.length === 0) return
+
+  showUploadStatus('info', `Удаление ${imagesToDelete.value.length} изображений...`)
+
+  try {
+    const deletePromises = imagesToDelete.value.map(id =>
+      api.excursions.deleteExcursionImage(id).catch(error => {
+        console.error(`Error deleting image ${id}:`, error)
+        return false
+      })
+    )
+
+    await Promise.all(deletePromises)
+
+    // Очищаем список
+    imagesToDelete.value = []
+
+    showUploadStatus('success', 'Изображения удалены')
+  } catch (error) {
+    console.error('Error deleting images:', error)
+    showUploadStatus('error', 'Ошибка удаления изображений')
+    throw error
   }
-  showUploadStatus('info', 'Изображение удалено')
+}
+
+// Навигация по карусели
+const nextImage = () => {
+  if (currentImageIndex.value < uploadedImages.value.length - 1) {
+    currentImageIndex.value++
+  }
+}
+
+const prevImage = () => {
+  if (currentImageIndex.value > 0) {
+    currentImageIndex.value--
+  }
+}
+
+const goToImage = (index: number) => {
+  currentImageIndex.value = index
 }
 
 // Показать статус загрузки
@@ -549,25 +691,6 @@ const showUploadStatus = (type: 'success' | 'error' | 'info', message: string) =
   setTimeout(() => {
     uploadStatus.value = null
   }, 3000)
-}
-
-// Загрузка изображения на сервер
-const uploadImage = async (file: File): Promise<string> => {
-  try {
-    imageUploading.value = true
-    showUploadStatus('info', 'Загрузка изображения...')
-
-    const imageUrl = await api.excursions.saveImage(file)
-
-    showUploadStatus('success', 'Изображение успешно загружено')
-    return imageUrl
-  } catch (error) {
-    console.error('Image upload error:', error)
-    showUploadStatus('error', 'Ошибка загрузки изображения')
-    throw error
-  } finally {
-    imageUploading.value = false
-  }
 }
 
 // Обработчик отправки формы
@@ -580,37 +703,17 @@ const handleSubmit = async () => {
     !formData.value.date ||
     formData.value.price <= 0 ||
     formData.value.duration <= 0 ||
-    formData.value.people_amount <= 0
+    formData.value.people_amount <= 0 ||
+    props.editingCard === null
   ) {
     showUploadStatus('error', 'Заполните все обязательные поля')
     return
   }
 
-  // Проверка изображения
-  if (!uploadedImage.value && !formData.value.image_url) {
-    showUploadStatus('error', 'Добавьте изображение экскурсии')
+  // Проверка изображений
+  if (uploadedImages.value.length === 0) {
+    showUploadStatus('error', 'Добавьте хотя бы одно изображение экскурсии')
     return
-  }
-
-  let finalImageUrl = formData.value.image_url
-
-  // Если есть загруженный файл, сначала загружаем его
-  if (uploadedImage.value) {
-    try {
-      finalImageUrl = await uploadImage(uploadedImage.value)
-    } catch (error) {
-      // Ошибка уже обработана в uploadImage
-      return
-    }
-  }
-
-  // Очистка детальной информации
-  const cleanedDetails = {
-    ...formData.value.details,
-    inclusions: formData.value.details.inclusions.filter((item) => item.trim() !== ''),
-    requirements: formData.value.details.requirements.filter((item) => item.trim() !== ''),
-    recommendations: formData.value.details.recommendations.filter((item) => item.trim() !== ''),
-    itinerary: formData.value.details.itinerary.filter((item) => item.title.trim() !== ''),
   }
 
   // Подготовка данных экскурсии
@@ -624,14 +727,24 @@ const handleSubmit = async () => {
     people_amount: formData.value.people_amount,
     people_left: formData.value.people_left,
     is_active: formData.value.is_active,
-    image_url: finalImageUrl,
     bus_number: formData.value.bus_number,
   }
 
+  // Очистка детальной информации
+  const cleanedDetails = {
+    ...formData.value.details,
+    inclusions: formData.value.details.inclusions.filter((item) => item.trim() !== ''),
+    requirements: formData.value.details.requirements.filter((item) => item.trim() !== ''),
+    recommendations: formData.value.details.recommendations.filter((item) => item.trim() !== ''),
+    itinerary: formData.value.details.itinerary.filter((item) => item.title.trim() !== ''),
+  }
+
+  uploadNewImages(props.editingCard.id)
+  deleteMarkedImages()
   // Отправка данных через emit
   emit('submit', {
     excursion: excursionData,
-    details: cleanedDetails,
+    details: cleanedDetails
   })
 }
 
@@ -692,7 +805,6 @@ const resetForm = () => {
     people_amount: 0,
     people_left: 0,
     is_active: true,
-    image_url: '',
     bus_number: 0,
     details: {
       description: '',
@@ -709,15 +821,29 @@ const resetForm = () => {
       recommendations: [''],
     },
   }
-  uploadedImage.value = null
-  imagePreview.value = ''
+
+  uploadedImages.value = []
+  currentImageIndex.value = 0
+  imagesToDelete.value = []
+  imagesToAdd.value = []
   imageUploading.value = false
+}
+
+// Загрузка изображений существующей экскурсии
+const loadExistingImages = async (excursionId: number) => {
+  try {
+    const images = await api.excursions.getExcursionImages(excursionId)
+    uploadedImages.value = images
+
+  } catch (error) {
+    console.error('Error loading existing images:', error)
+  }
 }
 
 // Наблюдаем за изменениями редактируемой карточки
 watch(
   () => props.editingCard,
-  (card) => {
+  async (card) => {
     if (card) {
       formData.value = {
         title: card.title,
@@ -728,7 +854,6 @@ watch(
         duration: card.duration,
         people_amount: card.people_amount,
         people_left: card.people_left,
-        image_url: card.image_url,
         is_active: card.is_active,
         bus_number: card.bus_number,
         details: props.editingDetails || {
@@ -746,11 +871,9 @@ watch(
           recommendations: [''],
         },
       }
+      // Загружаем существующие изображения
+      await loadExistingImages(card.id)
 
-      // Если есть изображение, показываем его как превью
-      if (card.image_url) {
-        imagePreview.value = card.image_url
-      }
     } else {
       resetForm()
     }
@@ -798,238 +921,22 @@ const handleCancel = () => {
   emit('cancel')
   emit('update:visible', false)
 }
+
+// Очистка при размонтировании
+onMounted(() => {
+  // Освобождаем временные URL при размонтировании компонента
+  return () => {
+    uploadedImages.value.forEach(img => {
+      if (img.is_temporary) {
+        URL.revokeObjectURL(img.url)
+      }
+    })
+  }
+})
 </script>
 
 <style scoped>
-/* Стили для загрузки изображений */
-.image-upload-section {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.image-preview {
-  position: relative;
-  width: 100%;
-  max-width: 300px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid var(--border-green-light);
-}
-
-.preview-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  display: block;
-}
-
-.remove-image-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(220, 53, 69, 0.9);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-  transition: all 0.3s ease;
-}
-
-.remove-image-btn:hover:not(:disabled) {
-  background: #c82333;
-  transform: scale(1.1);
-}
-
-.upload-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.file-input {
-  display: none;
-}
-
-.upload-buttons {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.upload-btn {
-  flex: 1;
-  padding: 12px 16px;
-  border: 2px solid var(--border-green-light);
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  min-width: 140px;
-}
-
-.upload-btn.primary {
-  background: var(--green-primary);
-  color: white;
-  border-color: var(--green-primary);
-}
-
-.upload-btn.primary:hover:not(:disabled) {
-  background: var(--green-dark);
-  border-color: var(--green-dark);
-}
-
-.upload-btn.secondary {
-  background: white;
-  color: var(--text-dark);
-  border-color: var(--border-green-medium);
-}
-
-.upload-btn.secondary:hover:not(:disabled) {
-  background: var(--green-bg-light);
-  border-color: var(--green-primary);
-}
-
-.upload-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.url-option {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.url-divider {
-  text-align: center;
-  color: var(--text-light);
-  font-size: 0.8rem;
-  position: relative;
-}
-
-.url-divider::before,
-.url-divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 30%;
-  height: 1px;
-  background: var(--border-green-light);
-}
-
-.url-divider::before {
-  left: 0;
-}
-
-.url-divider::after {
-  right: 0;
-}
-
-.url-input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid var(--border-turquoise);
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: white;
-}
-
-.url-input:focus {
-  outline: none;
-  border-color: var(--green-primary);
-  box-shadow: 0 0 0 3px var(--hover-turquoise);
-}
-
-.url-input:disabled {
-  background: #f8f9fa;
-  color: #6c757d;
-}
-
-.upload-status {
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.upload-status.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.upload-status.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.upload-status.info {
-  background: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
-}
-
-.upload-hints {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.upload-hints small {
-  color: var(--text-light);
-  font-size: 0.75rem;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-  .upload-buttons {
-    flex-direction: column;
-  }
-
-  .upload-btn {
-    min-width: auto;
-  }
-
-  .image-preview {
-    max-width: 100%;
-  }
-
-  .preview-image {
-    height: 150px;
-  }
-}
-
-@media (max-width: 480px) {
-  .upload-options {
-    gap: 8px;
-  }
-
-  .upload-btn {
-    padding: 10px 12px;
-    font-size: 0.85rem;
-  }
-}
-
-/* Предотвращение зума на мобильных */
-@media (max-width: 768px) {
-  .url-input,
-  .upload-btn {
-    font-size: 16px;
-    min-height: 44px;
-  }
-}
-
+/* Основные стили формы остаются без изменений */
 .form-overlay {
   position: fixed;
   top: 0;
@@ -1055,12 +962,300 @@ const handleCancel = () => {
   overflow-y: auto;
 }
 
-.form-container h2 {
-  margin-bottom: 25px;
-  color: var(--text-dark);
-  text-align: center;
+/* Стили для раздела фотографий */
+.photos-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
+.photos-carousel h4 {
+  margin-bottom: 15px;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+}
+
+/* Карусель для админки */
+.image-carousel-admin {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--border-green-light);
+  background: #f8f9fa;
+}
+
+.carousel-scroll-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.carousel-scroll-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.3s ease;
+}
+
+.carousel-image-item {
+  flex: 0 0 100%;
+  min-width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: white;
+}
+
+/* Кнопка удаления на изображении */
+.delete-image-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.delete-image-btn:hover:not(:disabled) {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+.delete-image-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Одно изображение */
+.single-image-admin {
+  width: 100%;
+  height: 100%;
+}
+
+.single-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Индикаторы точек */
+.carousel-indicators {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 5;
+}
+
+.indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.indicator-dot:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.2);
+}
+
+.indicator-dot.active {
+  background: white;
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Кнопки навигации карусели */
+.carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #333;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-nav-btn:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-50%) scale(1.1);
+  opacity: 1;
+}
+
+.carousel-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: translateY(-50%) !important;
+}
+
+.prev-btn {
+  left: 15px;
+}
+
+.next-btn {
+  right: 15px;
+}
+
+/* Загрузка изображений */
+.upload-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--border-green-light);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  width: 100%;
+}
+
+.upload-btn.primary {
+  background: var(--green-primary);
+  color: white;
+  border-color: var(--green-primary);
+}
+
+.url-inputs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.url-input {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--border-turquoise);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--hover-turquoise);
+}
+
+.add-url-btn {
+  padding: 12px 20px;
+  background: var(--green-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background 0.3s ease;
+  min-width: 60px;
+}
+
+.add-url-btn:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+
+.add-url-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Адаптивность карусели */
+@media (max-width: 768px) {
+  .image-carousel-admin {
+    height: 250px;
+  }
+
+  .carousel-nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .delete-image-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .order-buttons {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .image-carousel-admin {
+    height: 200px;
+  }
+
+  .carousel-nav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .delete-image-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .url-inputs {
+    flex-direction: column;
+  }
+
+  .add-url-btn {
+    width: 100%;
+  }
+}
+
+/* Остальные стили остаются без изменений */
 .card-form {
   display: flex;
   flex-direction: column;

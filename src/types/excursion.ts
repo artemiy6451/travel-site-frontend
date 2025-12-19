@@ -10,7 +10,7 @@ export interface Excursion {
   people_left: number
   bus_number: number
   is_active: boolean
-  image_url: string
+  images: ExcursionImage[]
 }
 
 export interface ExcursionCreate {
@@ -24,7 +24,6 @@ export interface ExcursionCreate {
   people_left: number
   bus_number: number
   is_active: boolean
-  image_url: string
 }
 
 export interface ExcursionUpdate {
@@ -38,7 +37,6 @@ export interface ExcursionUpdate {
   people_left?: number
   bus_number?: number
   is_active?: boolean
-  image_url?: string
 }
 
 export interface ItineraryItem {
@@ -78,4 +76,10 @@ export interface ExcursionDetails {
 
 export interface ExcursionFullInfo extends Excursion {
   details?: ExcursionDetails
+}
+
+export interface ExcursionImage {
+  id: number
+  excursion_id: number
+  url: string
 }

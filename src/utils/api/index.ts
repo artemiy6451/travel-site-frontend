@@ -1,7 +1,7 @@
-import { AuthApi } from "./auth"
-import { BookingApi } from "./booking"
-import { ExcursionsApi } from "./excursion"
-import { ReviewsApi } from "./reviews"
+import { AuthApi } from './auth'
+import { BookingApi } from './booking'
+import { ExcursionsApi } from './excursion'
+import { ReviewsApi } from './reviews'
 
 export class Api {
   auth: AuthApi

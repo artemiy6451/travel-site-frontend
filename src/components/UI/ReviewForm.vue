@@ -84,9 +84,7 @@
           class="form-textarea"
         ></textarea>
         <div class="textarea-footer">
-          <div class="char-counter">
-            {{ form.text.length }}/2000
-          </div>
+          <div class="char-counter">{{ form.text.length }}/2000</div>
           <div class="text-hint">Минимум 10 символов</div>
         </div>
       </div>
@@ -95,7 +93,7 @@
         type="submit"
         class="submit-btn"
         :disabled="loading || !isFormValid"
-        :class="{ 'loading': loading }"
+        :class="{ loading: loading }"
       >
         <span v-if="loading" class="btn-loading">
           <span class="loading-dots"></span>
@@ -110,8 +108,8 @@
 
     <div class="form-footer">
       <p class="privacy-note">
-        Отправляя отзыв, вы соглашаетесь с обработкой ваших персональных данных.
-        Отзывы проходят модерацию перед публикацией.
+        Отправляя отзыв, вы соглашаетесь с обработкой ваших персональных данных. Отзывы проходят
+        модерацию перед публикацией.
       </p>
     </div>
   </form>
@@ -475,8 +473,13 @@ const handleSubmit = async () => {
 }
 
 @keyframes loadingDots {
-  0%, 100% { transform: translateX(-12px); }
-  50% { transform: translateX(12px); }
+  0%,
+  100% {
+    transform: translateX(-12px);
+  }
+  50% {
+    transform: translateX(12px);
+  }
 }
 
 .form-footer {

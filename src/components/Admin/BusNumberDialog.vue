@@ -27,14 +27,8 @@
       </div>
 
       <div class="dialog-footer">
-        <button class="btn btn-secondary" @click="closeDialog" :disabled="loading">
-          Отмена
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="confirmDialog"
-          :disabled="!isValid || loading"
-        >
+        <button class="btn btn-secondary" @click="closeDialog" :disabled="loading">Отмена</button>
+        <button class="btn btn-primary" @click="confirmDialog" :disabled="!isValid || loading">
           <span v-if="loading">Сохранение...</span>
           <span v-else>Сохранить</span>
         </button>
@@ -81,7 +75,7 @@ watch(
     } else {
       busNumber.value = 0
     }
-  }
+  },
 )
 
 const closeDialog = () => {

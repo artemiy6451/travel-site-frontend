@@ -38,21 +38,40 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="firstName" class="form-label">Имя *</label>
-                <input id="firstName" v-model="formData.first_name" type="text" class="form-input" required
-                  placeholder="Введите ваше имя">
+                <input
+                  id="firstName"
+                  v-model="formData.first_name"
+                  type="text"
+                  class="form-input"
+                  required
+                  placeholder="Введите ваше имя"
+                />
               </div>
 
               <div class="form-group">
                 <label for="lastName" class="form-label">Фамилия *</label>
-                <input id="lastName" v-model="formData.last_name" type="text" class="form-input" required
-                  placeholder="Введите вашу фамилию">
+                <input
+                  id="lastName"
+                  v-model="formData.last_name"
+                  type="text"
+                  class="form-input"
+                  required
+                  placeholder="Введите вашу фамилию"
+                />
               </div>
             </div>
 
             <div class="form-group">
               <label for="phone" class="form-label">Номер телефона *</label>
-              <input id="phone" v-model="formData.phone_number" type="tel" class="form-input" required
-                placeholder="+7 (XXX) XXX-XX-XX" @input="formatPhone">
+              <input
+                id="phone"
+                v-model="formData.phone_number"
+                type="tel"
+                class="form-input"
+                required
+                placeholder="+7 (XXX) XXX-XX-XX"
+                @input="formatPhone"
+              />
               <div class="input-hint">Формат: +7 XXX XXX-XX-XX</div>
             </div>
           </div>
@@ -64,21 +83,26 @@
               <div class="people-group">
                 <label class="people-label">Всего человек *</label>
                 <div class="people-counter">
-                  <button type="button" class="counter-btn minus" @click="decrementTotal"
-                    :disabled="formData.total_people <= 1">
+                  <button
+                    type="button"
+                    class="counter-btn minus"
+                    @click="decrementTotal"
+                    :disabled="formData.total_people <= 1"
+                  >
                     −
                   </button>
                   <span class="people-count">{{ formData.total_people }}</span>
-                  <button type="button" class="counter-btn plus" @click="incrementTotal"
-                    :disabled="formData.total_people >= maxPeople">
+                  <button
+                    type="button"
+                    class="counter-btn plus"
+                    @click="incrementTotal"
+                    :disabled="formData.total_people >= maxPeople"
+                  >
                     +
                   </button>
                 </div>
-                <div class="people-hint">
-                  Максимум: {{ maxPeople }} человек
-                </div>
+                <div class="people-hint">Максимум: {{ maxPeople }} человек</div>
               </div>
-
             </div>
 
             <!-- Итоговая стоимость -->
@@ -142,11 +166,15 @@ const formData = ref<BookingCreate>({
 })
 
 // Следим за изменением экскурсии
-watch(() => props.excursion, (newExcursion) => {
-  if (newExcursion) {
-    formData.value.excursion_id = newExcursion.id
-  }
-}, { immediate: true })
+watch(
+  () => props.excursion,
+  (newExcursion) => {
+    if (newExcursion) {
+      formData.value.excursion_id = newExcursion.id
+    }
+  },
+  { immediate: true },
+)
 
 // Максимальное количество людей
 const maxPeople = computed(() => {
@@ -155,11 +183,13 @@ const maxPeople = computed(() => {
 
 // Валидация формы
 const isFormValid = computed(() => {
-  return formData.value.first_name.trim() &&
+  return (
+    formData.value.first_name.trim() &&
     formData.value.last_name.trim() &&
     formData.value.phone_number.replace(/\D/g, '').length >= 11 &&
     formData.value.total_people > 0 &&
     formData.value.total_people <= maxPeople.value
+  )
 })
 
 // Расчет стоимости
@@ -237,7 +267,7 @@ const formatDate = (dateString: string | Date): string => {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-    weekday: 'long'
+    weekday: 'long',
   })
 }
 
@@ -259,7 +289,6 @@ const submitBooking = async (new_booking: BookingCreate) => {
   error.value = ''
 
   try {
-
     await api.booking.createBooking(new_booking)
 
     const booking = true
@@ -268,7 +297,6 @@ const submitBooking = async (new_booking: BookingCreate) => {
 
     // Сбрасываем форму
     resetForm()
-
   } catch (err: any) {
     error.value = err.message || 'Произошла ошибка при отправке заявки'
     console.error('Booking error:', err)
@@ -285,7 +313,7 @@ const resetForm = () => {
     last_name: '',
     phone_number: '',
     total_people: 1,
-    children: 0
+    children: 0,
   }
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="review-card" :class="{ 'pending': !review.is_active }">
+  <div class="review-card" :class="{ pending: !review.is_active }">
     <div class="card-header">
       <div class="reviewer-info">
         <div class="avatar">
@@ -23,8 +23,8 @@
         <span
           class="status-badge"
           :class="{
-            'approved': review.is_active,
-            'pending': !review.is_active
+            approved: review.is_active,
+            pending: !review.is_active,
           }"
         >
           {{ review.is_active ? 'Одобрен' : 'На модерации' }}
@@ -44,16 +44,11 @@
       <button
         @click="$emit('toggle', review.id)"
         class="action-btn toggle-btn"
-        :class="{ 'hide': review.is_active }"
+        :class="{ hide: review.is_active }"
       >
         {{ review.is_active ? 'Скрыть' : 'Одобрить' }}
       </button>
-      <button
-        @click="$emit('delete', review.id)"
-        class="action-btn delete-btn"
-      >
-        Удалить
-      </button>
+      <button @click="$emit('delete', review.id)" class="action-btn delete-btn">Удалить</button>
     </div>
   </div>
 </template>
@@ -75,7 +70,7 @@ defineEmits<{
 const getInitials = (name: string): string => {
   return name
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase())
+    .map((word) => word.charAt(0).toUpperCase())
     .join('')
     .substring(0, 2)
 }
@@ -85,7 +80,7 @@ const formatDate = (dateString: string): string => {
   return date.toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
   })
 }
 </script>
@@ -115,8 +110,13 @@ const formatDate = (dateString: string): string => {
 }
 
 @keyframes pulse {
-  0%, 100% { border-color: var(--green-light); }
-  50% { border-color: var(--green-primary); }
+  0%,
+  100% {
+    border-color: var(--green-light);
+  }
+  50% {
+    border-color: var(--green-primary);
+  }
 }
 
 .card-header {

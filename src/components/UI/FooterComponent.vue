@@ -61,8 +61,8 @@
       <div class="footer_section">
         <h3 class="section_title">О нас</h3>
         <p class="about_text">
-          Мы — Вера и Виталий, профессиональные экскурсоводы.
-          Показываем настоящий Крым с душой и любовью к полуострову.
+          Мы — Вера и Виталий, профессиональные экскурсоводы. Показываем настоящий Крым с душой и
+          любовью к полуострову.
         </p>
       </div>
     </div>
@@ -83,10 +83,7 @@ const isAdmin = ref<boolean>(false)
 
 const currentYear = ref(new Date().getFullYear())
 
-onMounted(async () =>
-  isAdmin.value = await api.auth.checkAdminAccess()
-)
-
+onMounted(async () => (isAdmin.value = await api.auth.checkAdminAccess()))
 </script>
 
 <style scoped>

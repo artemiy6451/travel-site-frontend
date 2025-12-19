@@ -12,9 +12,7 @@
 
         <div class="header-content">
           <h1 class="page-title">Отзывы наших гостей</h1>
-          <p class="page-subtitle">
-            Что говорят путешественники о наших экскурсиях по Крыму
-          </p>
+          <p class="page-subtitle">Что говорят путешественники о наших экскурсиях по Крыму</p>
         </div>
       </div>
 
@@ -33,10 +31,7 @@
       </div>
 
       <!-- Форма отзыва -->
-      <ReviewForm
-        class="form-section"
-        @review-created="handleReviewCreated"
-      />
+      <ReviewForm class="form-section" @review-created="handleReviewCreated" />
 
       <!-- Список отзывов -->
       <div class="reviews-section">
@@ -97,11 +92,7 @@
 
         <!-- Пагинация (только для публичных отзывов) -->
         <div v-if="!isAdmin && displayedReviews.length > 0 && hasMore" class="pagination">
-          <button
-            @click="loadMore"
-            :disabled="loading"
-            class="load-more-btn"
-          >
+          <button @click="loadMore" :disabled="loading" class="load-more-btn">
             <span v-if="loading">Загрузка...</span>
             <span v-else>Показать еще</span>
           </button>
@@ -141,15 +132,15 @@ const displayedReviews = computed(() => {
       case 'all':
         return allReviews.value
       case 'pending':
-        return pendingReviews.value.filter(r => !r.is_active)
+        return pendingReviews.value.filter((r) => !r.is_active)
       case 'approved':
-        return approvedReviews.value.filter(r => r.is_active)
+        return approvedReviews.value.filter((r) => r.is_active)
       default:
         return allReviews.value
     }
   } else {
     // Для не-админов показываем только одобренные активные отзывы
-    return approvedReviews.value.filter(r => r.is_active)
+    return approvedReviews.value.filter((r) => r.is_active)
   }
 })
 
@@ -188,7 +179,6 @@ const loadApprovedReviews = async (reset = false) => {
     }
 
     hasMore.value = false
-
   } catch (error) {
     console.error('Error loading approved reviews:', error)
   } finally {
@@ -205,13 +195,12 @@ const loadAdminReviews = async () => {
   try {
     const [all, pending] = await Promise.all([
       api.reviews.getAllReviews(),
-      api.reviews.getPendingReviews()
+      api.reviews.getPendingReviews(),
     ])
 
     allReviews.value = all
     pendingReviews.value = pending
-    approvedReviews.value = all.filter(r => r.is_active)
-
+    approvedReviews.value = all.filter((r) => r.is_active)
   } catch (error) {
     console.error('Error loading admin reviews:', error)
   } finally {
@@ -517,8 +506,12 @@ onMounted(async () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-state {

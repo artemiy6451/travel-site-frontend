@@ -6,9 +6,7 @@
         <div class="hero-overlay"></div>
       </div>
       <div class="hero-content">
-        <router-link to="/" class="hero-badge">
-          Вера и Виталий | Экскурсии по Крыму
-        </router-link>
+        <router-link to="/" class="hero-badge"> Вера и Виталий | Экскурсии по Крыму </router-link>
         <h1 class="hero-title">Откройте настоящий Крым вместе с нами</h1>
         <p class="hero-subtitle">
           Профессиональные экскурсии по самым красивым и удивительным уголкам полуострова
@@ -37,14 +35,14 @@
           <h2 class="section-title">Наша история</h2>
           <div class="about-text">
             <p>
-              Мы — Вера и Виталий, профессиональные экскурсоводы и настоящие влюбленные в Крым.
-              Наш путь начался с простой идеи — показать полуостров таким, каким мы его знаем и любим:
+              Мы — Вера и Виталий, профессиональные экскурсоводы и настоящие влюбленные в Крым. Наш
+              путь начался с простой идеи — показать полуостров таким, каким мы его знаем и любим:
               наполненным историями, легендами и неповторимой атмосферой.
             </p>
             <p>
               За годы работы мы провели сотни экскурсий и поняли главное: каждый гость ищет в Крыме
-              что-то свое. Кто-то — захватывающие панорамы гор и моря, кто-то — древние истории и тайны,
-              а кто-то — уединенные уголки природы. И мы знаем, где найти всё это!
+              что-то свое. Кто-то — захватывающие панорамы гор и моря, кто-то — древние истории и
+              тайны, а кто-то — уединенные уголки природы. И мы знаем, где найти всё это!
             </p>
           </div>
         </div>
@@ -90,22 +88,29 @@
               <span class="offer-number">01</span>
               <div class="offer-text">
                 <h3>Авторские маршруты</h3>
-                <p>Разработанные нами уникальные программы, которые включают как популярные достопримечательности, так и
-                  малоизвестные уголки Крыма</p>
+                <p>
+                  Разработанные нами уникальные программы, которые включают как популярные
+                  достопримечательности, так и малоизвестные уголки Крыма
+                </p>
               </div>
             </div>
             <div class="offer-item">
               <span class="offer-number">02</span>
               <div class="offer-text">
                 <h3>Комфортные условия</h3>
-                <p>Удобный транспорт, продуманное расписание, остановки в самых живописных местах для фото и отдыха</p>
+                <p>
+                  Удобный транспорт, продуманное расписание, остановки в самых живописных местах для
+                  фото и отдыха
+                </p>
               </div>
             </div>
             <div class="offer-item">
               <span class="offer-number">03</span>
               <div class="offer-text">
                 <h3>Живые эмоции</h3>
-                <p>Не просто экскурсия, а настоящее путешествие, которое останется в памяти навсегда</p>
+                <p>
+                  Не просто экскурсия, а настоящее путешествие, которое останется в памяти навсегда
+                </p>
               </div>
             </div>
           </div>
@@ -147,11 +152,11 @@
       <div class="container">
         <div class="cta-content">
           <h2 class="cta-title">Хочешь увидеть настоящий Крым?</h2>
-          <p class="cta-subtitle">Поехали с нами! Выберите экскурсию по душе и забронируйте место</p>
+          <p class="cta-subtitle">
+            Поехали с нами! Выберите экскурсию по душе и забронируйте место
+          </p>
           <div class="cta-buttons">
-            <router-link to="/" class="cta-button primary">
-              Смотреть экскурсии
-            </router-link>
+            <router-link to="/" class="cta-button primary"> Смотреть экскурсии </router-link>
             <a href="https://vk.com/vvvectaa" target="_blank" class="cta-button secondary">
               Написать в VK
             </a>
@@ -162,8 +167,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .about-page {
@@ -189,7 +193,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-light) 50%, var(--green-lighter) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--green-primary) 0%,
+    var(--green-light) 50%,
+    var(--green-lighter) 100%
+  );
 }
 
 .hero-overlay {
@@ -330,7 +339,9 @@
   padding: 40px 30px;
   background: var(--green-bg-light);
   border-radius: 20px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .value-card:hover {
@@ -856,7 +867,6 @@
 
 /* Плавные переходы для всех интерактивных элементов */
 @media (hover: hover) {
-
   .value-card,
   .location-card,
   .cta-button {
@@ -866,7 +876,6 @@
 
 /* Отключение hover-эффектов на тач-устройствах */
 @media (hover: none) {
-
   .value-card:hover,
   .location-card:hover {
     transform: none;

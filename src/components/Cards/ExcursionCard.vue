@@ -1,7 +1,15 @@
 <template>
   <div class="card" @click="$emit('view-details', excursion.id)">
     <div class="card-image">
-      <img :src="excursion.image_url" :alt="excursion.title" @error="handleImageError" />
+      <!-- Контейнер для скролла фоток -->
+      <ImageCarousel
+        :images="allImages"
+        :alt-text="excursion.title"
+        height="200px"
+        :show-indicators="hasMultipleImages"
+        :show-navigation="hasMultipleImages"
+      />
+
       <div class="card-price">{{ formatPrice(excursion.price) }}</div>
       <span class="card-category">{{ getCategoryName(excursion.category) }}</span>
       <!-- Бейдж для ближайших экскурсий -->
@@ -43,11 +51,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import type { Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
-import { handleImageError } from '@/utils/image'
+import ImageCarousel from '@/components/UI/ImageCarousel.vue'
 
 interface Props {
   excursion: Excursion
@@ -59,6 +68,108 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+const currentImageIndex = ref(0)
+
+// Все изображения для скролла
+const allImages = computed(() => {
+  return props.excursion.images || []
+})
+
+const hasMultipleImages = computed(() => allImages.value.length > 1)
+
+// Навигация по изображениям
+const nextImage = () => {
+  if (currentImageIndex.value < allImages.value.length - 1) {
+    currentImageIndex.value++
+  } else {
+    currentImageIndex.value = 0
+  }
+}
+
+const prevImage = () => {
+  if (currentImageIndex.value > 0) {
+    currentImageIndex.value--
+  } else {
+    currentImageIndex.value = allImages.value.length - 1
+  }
+}
+
+const scrollToImage = (index: number) => {
+  currentImageIndex.value = index
+}
+
+// Переменные для обработки свайпа
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+const isSwiping = ref(false)
+
+// Обработчики тач-событий
+const handleTouchStart = (e: TouchEvent) => {
+  touchStartX.value = e.touches[0].clientX
+  touchStartY.value = e.touches[0].clientY
+  isSwiping.value = false
+}
+
+const handleTouchMove = (e: TouchEvent) => {
+  if (!touchStartX.value || !touchStartY.value) return
+
+  const touchX = e.touches[0].clientX
+  const touchY = e.touches[0].clientY
+
+  // Вычисляем разницу
+  const diffX = Math.abs(touchX - touchStartX.value)
+  const diffY = Math.abs(touchY - touchStartY.value)
+
+  // Если движение в основном горизонтальное - предотвращаем скролл страницы
+  if (diffX > diffY && diffX > 5) {
+    e.preventDefault() // Предотвращаем скролл страницы
+    isSwiping.value = true
+  }
+}
+
+const handleTouchEnd = (e: TouchEvent) => {
+  if (!touchStartX.value || !isSwiping.value) return
+
+  const touchEndX = e.changedTouches[0].clientX
+  const touchEndY = e.changedTouches[0].clientY
+
+  const diffX = touchStartX.value - touchEndX
+  const minSwipeDistance = 30
+
+  if (Math.abs(diffX) > minSwipeDistance) {
+    if (diffX > 0) {
+      nextImage() // Свайп влево
+    } else {
+      prevImage() // Свайп вправо
+    }
+  }
+
+  // Сброс
+  touchStartX.value = 0
+  touchStartY.value = 0
+  isSwiping.value = false
+}
+
+// Привязать события к контейнеру
+let scrollContainer: HTMLElement | null = null
+
+onMounted(() => {
+  scrollContainer = document.querySelector('.image-scroll-container')
+  if (scrollContainer) {
+    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: false })
+    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: false })
+    scrollContainer.addEventListener('touchend', handleTouchEnd, { passive: true })
+  }
+})
+
+onUnmounted(() => {
+  if (scrollContainer) {
+    scrollContainer.removeEventListener('touchstart', handleTouchStart)
+    scrollContainer.removeEventListener('touchmove', handleTouchMove)
+    scrollContainer.removeEventListener('touchend', handleTouchEnd)
+  }
+})
 
 // Проверка что экскурсия скоро (в течение недели)
 const isUpcomingSoon = computed((): boolean => {
@@ -134,17 +245,127 @@ const getCategoryName = (category: string): string => {
   overflow: hidden;
 }
 
-.card-image img {
+/* Стили для скролла фоток */
+.image-scroll-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.image-scroll-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.3s ease;
+  will-change: transform;
+}
+
+.scroll-image-item {
+  flex: 0 0 100%;
+  min-width: 100%;
+  height: 100%;
+}
+
+.scroll-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Стили для одиночного изображения */
+.single-image-container {
+  width: 100%;
+  height: 100%;
+}
+
+.single-image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.card:hover .card-image img {
+.card:hover .single-image-container img {
   transform: scale(1.05);
 }
 
+/* Индикаторы точек */
+.image-indicators {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  z-index: 2;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.indicator-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.indicator-dot.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* Кнопки навигации */
+.scroll-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #333;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.3s ease;
+  opacity: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover .scroll-nav-btn {
+  opacity: 1;
+}
+
+.scroll-nav-btn:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.scroll-nav-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.prev-btn {
+  left: 10px;
+}
+
+.next-btn {
+  right: 10px;
+}
+
+/* Улучшенные стили для существующих элементов */
 .card-price {
   position: absolute;
   top: 15px;
@@ -157,6 +378,7 @@ const getCategoryName = (category: string): string => {
   font-size: 1.1rem;
   border: 1px solid var(--green-light);
   box-shadow: 0 2px 8px var(--shadow-default);
+  z-index: 2;
 }
 
 .card-category {
@@ -169,18 +391,20 @@ const getCategoryName = (category: string): string => {
   border-radius: 15px;
   font-size: 0.8rem;
   font-weight: 500;
+  z-index: 2;
 }
 
 .card-soon-badge {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
+  bottom: 15px;
+  left: 15px;
   background: rgba(255, 193, 7, 0.9);
   color: #000;
   padding: 4px 8px;
   border-radius: 8px;
   font-size: 0.7rem;
   font-weight: 500;
+  z-index: 2;
 }
 
 .card-content {
@@ -309,6 +533,23 @@ const getCategoryName = (category: string): string => {
   .people-info {
     justify-content: center;
   }
+
+  /* На мобильных всегда показываем кнопки навигации */
+  .scroll-nav-btn {
+    opacity: 0.7;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .image-indicators {
+    bottom: 10px;
+  }
+
+  .indicator-dot {
+    width: 6px;
+    height: 6px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -322,6 +563,33 @@ const getCategoryName = (category: string): string => {
 
   .people-status-badge {
     font-size: 0.6rem;
+  }
+
+  .scroll-nav-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .card-price {
+    font-size: 1rem;
+    padding: 6px 12px;
+  }
+
+  .card-category {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+}
+
+/* Поддержка touch-свайпа */
+@media (hover: none) and (pointer: coarse) {
+  .image-scroll-container {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-nav-btn {
+    opacity: 0.7; /* Всегда показываем на тач-устройствах */
   }
 }
 </style>

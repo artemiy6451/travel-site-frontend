@@ -8,6 +8,7 @@ import type {
   ExcursionDetails,
   ExcursionDetailsCreate,
   ExcursionDetailsUpdate,
+  ExcursionImage,
 } from '@/types/excursion'
 
 export class ExcursionsApi extends BaseApi {
@@ -18,6 +19,7 @@ export class ExcursionsApi extends BaseApi {
     if (excursionId) {
       cache.delete(`excursion:${excursionId}`)
       cache.delete(`excursion_details:${excursionId}`)
+      cache.delete(`excursion_images:${excursionId}`)
     }
   }
 
@@ -146,19 +148,24 @@ export class ExcursionsApi extends BaseApi {
         headers: {
           ...this.getAuthHeaders(),
         },
-      }
+      },
     )
 
     this.invalidateExcursionCache(id)
     return response
   }
 
-  async saveImage(imageFile: File): Promise<string> {
+  // ========== Работа с изображениями ==========
+
+  /**
+   * Добавляет изображение к экскурсии
+   */
+  async addExcursionImage(excursionId: number, imageFile: File): Promise<ExcursionImage> {
     try {
       const formData = new FormData()
       formData.append('image_file', imageFile)
 
-      const response = await fetch(`${this.API_BASE_URL}/excursions/save_image`, {
+      const response = await fetch(`${this.API_BASE_URL}/excursions/${excursionId}/add_image`, {
         method: 'POST',
         headers: {
           ...this.getAuthHeaders(),
@@ -178,12 +185,104 @@ export class ExcursionsApi extends BaseApi {
         throw new Error(errorMessage)
       }
 
-      return await response.json()
+      const image = await response.json()
+
+      // Инвалидируем кэш изображений для этой экскурсии
+      cache.delete(`excursion_images:${excursionId}`)
+      this.invalidateExcursionCache(excursionId)
+
+      return image
     } catch (error) {
-      console.error('Error uploading image:', error)
+      console.error('Error adding excursion image:', error)
       throw error
     }
   }
+
+  /**
+   * Получает все изображения экскурсии
+   */
+  async getExcursionImages(excursionId: number): Promise<ExcursionImage[]> {
+    const cacheKey = `excursion_images:${excursionId}`
+    const cached = cache.get(cacheKey)
+    if (cached) return cached
+
+    try {
+      const response = await this.request<ExcursionImage[]>(
+        `/excursions/${excursionId}/get_images`
+      )
+      cache.set(cacheKey, response)
+      return response
+    } catch (error) {
+      console.error('Error getting excursion images:', error)
+      // Если ручка не найдена, возвращаем пустой массив
+      if (error instanceof Error && error.message.includes('404')) {
+        return []
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Удаляет изображение экскурсии
+   */
+  async deleteExcursionImage(imageId: number): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/excursions/image/${imageId}`, {
+        method: 'DELETE',
+        headers: {
+          ...this.getAuthHeaders(),
+        },
+      })
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`
+        try {
+          const errorData = await response.json()
+          errorMessage =
+            typeof errorData.detail === 'string'
+              ? errorData.detail
+              : JSON.stringify(errorData.detail)
+        } catch {}
+        throw new Error(errorMessage)
+      }
+
+      const result = await response.json()
+
+      // Нужно инвалидировать кэш всех экскурсий, так как не знаем excursionId
+      cache.clearByPrefix('excursion_images')
+      cache.clearByPrefix('excursion_full')
+      cache.clearByPrefix('excursions')
+
+      return result === true || result === 'true'
+    } catch (error) {
+      console.error('Error deleting excursion image:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Массовая загрузка изображений для экскурсии
+   */
+  async bulkAddExcursionImages(excursionId: number, imageFiles: File[]): Promise<ExcursionImage[]> {
+    const uploadPromises = imageFiles.map(file =>
+      this.addExcursionImage(excursionId, file)
+    )
+
+    try {
+      const results = await Promise.all(uploadPromises)
+
+      // Инвалидируем кэш после всех загрузок
+      cache.delete(`excursion_images:${excursionId}`)
+      this.invalidateExcursionCache(excursionId)
+
+      return results
+    } catch (error) {
+      console.error('Error bulk uploading images:', error)
+      throw error
+    }
+  }
+
+  // ========== Работа с детальной информацией ==========
 
   async getExcursionFull(id: number): Promise<ExcursionFullInfo> {
     const cacheKey = `excursion_full:${id}`
@@ -191,6 +290,17 @@ export class ExcursionsApi extends BaseApi {
     if (cached) return cached
 
     const response = await this.request<ExcursionFullInfo>(`/excursions/${id}/full`)
+
+    // Если в ответе нет изображений, пытаемся их получить отдельно
+    if (response && (!response.images || response.images.length === 0)) {
+      try {
+        const images = await this.getExcursionImages(id)
+        response.images = images
+      } catch (error) {
+        console.warn('Could not load images separately:', error)
+      }
+    }
+
     cache.set(cacheKey, response)
     return response
   }
@@ -246,5 +356,87 @@ export class ExcursionsApi extends BaseApi {
     })
 
     this.invalidateExcursionCache(excursionId)
+  }
+
+  // ========== Вспомогательные методы ==========
+
+  /**
+   * Создает экскурсию с деталями и изображениями за один запрос
+   */
+  async createExcursionWithDetailsAndImages(
+    excursion: ExcursionCreate,
+    details?: ExcursionDetailsCreate,
+    images?: File[]
+  ): Promise<ExcursionFullInfo> {
+    // 1. Создаем экскурсию
+    const newExcursion = await this.createExcursion(excursion)
+
+    // 2. Создаем детали если есть
+    if (details) {
+      await this.createExcursionDetails(newExcursion.id, details)
+    }
+
+    // 3. Загружаем изображения если есть
+    if (images && images.length > 0) {
+      await this.bulkAddExcursionImages(newExcursion.id, images)
+    }
+
+    // 4. Получаем полную информацию
+    return this.getExcursionFull(newExcursion.id)
+  }
+
+  /**
+   * Обновляет экскурсию, детали и изображения
+   */
+  async updateExcursionComprehensive(
+    excursionId: number,
+    excursionUpdate: ExcursionUpdate,
+    detailsUpdate?: ExcursionDetailsUpdate,
+    newImages?: File[],
+    deletedImageIds?: number[]
+  ): Promise<ExcursionFullInfo> {
+    // 1. Обновляем экскурсию
+    await this.updateExcursion(excursionId, excursionUpdate)
+
+    // 2. Обновляем детали если есть
+    if (detailsUpdate) {
+      try {
+        await this.updateExcursionDetails(excursionId, detailsUpdate)
+      } catch (error) {
+        // Если деталей еще нет, создаем их
+        if (error instanceof Error && error.message.includes('404')) {
+          const detailsCreate: ExcursionDetailsCreate = {
+            description: detailsUpdate.description || '',
+            inclusions: detailsUpdate.inclusions || [],
+            itinerary: detailsUpdate.itinerary || [],
+            meeting_point: detailsUpdate.meeting_point || '',
+            requirements: detailsUpdate.requirements || [],
+            recommendations: detailsUpdate.recommendations || [],
+          }
+          await this.createExcursionDetails(excursionId, detailsCreate)
+        } else {
+          throw error
+        }
+      }
+    }
+
+    // 3. Добавляем новые изображения
+    if (newImages && newImages.length > 0) {
+      await this.bulkAddExcursionImages(excursionId, newImages)
+    }
+
+    // 4. Удаляем изображения
+    if (deletedImageIds && deletedImageIds.length > 0) {
+      const deletePromises = deletedImageIds.map(id =>
+        this.deleteExcursionImage(id).catch(error => {
+          console.error(`Error deleting image ${id}:`, error)
+          return false
+        })
+      )
+      await Promise.all(deletePromises)
+    }
+
+    // 5. Получаем обновленную информацию
+    return this.getExcursionFull(excursionId)
   }
 }
