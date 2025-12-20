@@ -17,27 +17,22 @@
       error-title="Что-то пошло не так" @retry="loadExcursion" :showRetry="showRetry">
       <!-- Контент экскурсии -->
       <div v-if="excursion" class="modern-content">
+        <section class="title-section">
+          <h1 class="hero-title">{{ excursion.title }}</h1>
+        </section>
+
         <!-- Hero секция со скроллом фоток -->
         <section class="hero-section">
           <div class="hero-image-container">
             <ImageCarousel
+              height="100%"
               :images="allImages"
-              :alt-text="excursion.title" height="60vh"
+              :alt-text="excursion.title"
               :show-indicators="hasMultipleImages"
               :show-navigation="hasMultipleImages"
               :initial-slide="currentImageIndex"
             />
 
-            <div class="image-overlay"></div>
-            <div class="hero-badge">
-              <span class="badge-text">{{ getCategoryName(excursion.category) }}</span>
-            </div>
-          </div>
-
-          <div class="hero-content">
-            <h1 class="hero-title">{{ excursion.title }}</h1>
-            <div class="hero-meta">
-            </div>
           </div>
         </section>
 
@@ -96,7 +91,7 @@
         <div class="price-amount">{{ formatPrice(excursion.price) }}</div>
         <div class="price-label">за человека</div>
         <div v-if="excursion.people_left > 0" class="spots-left">
-          Осталось {{ excursion.people_left }} мест
+          Осталось {{ excursion.people_left }} {{ format_people_left_title(excursion.people_left) }}
         </div>
         <div v-else class="spots-left sold-out">Мест нет</div>
       </div>
@@ -128,6 +123,7 @@ import BookingForm from '@/components/UI/BookingForm.vue'
 import ImageCarousel from '@/components/UI/ImageCarousel.vue'
 import type { BookingCreate } from '@/types/booking'
 import { sendMetrik } from '@/utils/metrika'
+import { format_people_left_title, formatPrice } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -135,7 +131,6 @@ const router = useRouter()
 const excursion = ref<ExcursionFullInfo>({
   id: 0,
   title: '',
-  category: '',
   description: '',
   date: new Date(),
   price: 0,
@@ -200,7 +195,6 @@ const loadExcursion = async () => {
 const showBookingModal = ref(false)
 const handleBooking = () => {
   if (!excursion.value || excursion.value.people_left === 0) return
-  // window.open('https://vk.com/vvvectaa', '_blank')
   showBookingModal.value = true
   sendMetrik('booking-start')
 }
@@ -279,22 +273,6 @@ const hasRecommendations = (excursion: ExcursionFullInfo): boolean => {
   return !!(excursion.details?.recommendations && excursion.details.recommendations.length > 0)
 }
 
-// Вспомогательные функции
-const formatPrice = (price: number): string => {
-  return `${price.toLocaleString('ru-RU')} ₽`
-}
-
-const getCategoryName = (category: string): string => {
-  const categories: { [key: string]: string } = {
-    горные: 'Горные',
-    морские: 'Морские',
-    исторические: 'Исторические',
-    природа: 'Природа',
-    городские: 'Городские',
-  }
-  return categories[category] || category
-}
-
 // Загрузка при монтировании
 onMounted(() => {
   loadExcursion()
@@ -364,133 +342,28 @@ onMounted(() => {
   border-color: #d1d5db;
 }
 
-/* Hero секция со скроллом */
-.hero-section {
-  position: relative;
-}
-
-.hero-image-container {
-  position: relative;
-  height: 60vh;
-  min-height: 400px;
-  overflow: hidden;
-}
-
-.image-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3));
-  z-index: 1;
-  pointer-events: none;
-}
-
-.hero-badge {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  z-index: 2;
-}
-
-/* Индикаторы точек */
-.image-indicators {
-  position: absolute;
-  bottom: 30px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  z-index: 2;
-}
-
-.indicator-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.3s ease;
-}
-
-.indicator-dot:hover {
-  background: rgba(255, 255, 255, 0.9);
-  transform: scale(1.3);
-}
-
-.indicator-dot.active {
-  background: white;
-  transform: scale(1.3);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-}
-
-/* Кнопки навигации */
-.scroll-nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #333;
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-  transition: all 0.3s ease;
-  opacity: 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.hero-content {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 40px 20px;
-  color: white;
+.title-section {
   max-width: 1200px;
   margin: 0 auto;
-  z-index: 2;
-  pointer-events: none;
+  padding: 30px 20px 20px; /* Отступы сверху/снизу */
+  z-index: 10;
+  position: relative;
+  background: white; /* Белый фон для заголовка */
 }
 
 .hero-title {
   font-size: 2.5rem;
   font-weight: 700;
-  margin-bottom: 15px;
   line-height: 1.2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: var(--text-dark); /* Темный цвет текста */
+  text-align: center;
 }
 
-.hero-meta {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  opacity: 0.9;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+.hero-image-container {
+  height: 70vh;
+  max-width: 1200px;
+  min-height: 400px;
+  margin: 0 auto;
 }
 
 /* Основной контент */
@@ -499,9 +372,6 @@ onMounted(() => {
   margin: 0 auto;
   padding: 40px 20px 40px;
 }
-
-/* Остальные стили остаются без изменений */
-/* ... существующие стили для остальных секций ... */
 
 /* Секция места сбора */
 .meeting-point-section {
@@ -664,37 +534,6 @@ onMounted(() => {
     min-height: 300px;
   }
 
-  .scroll-nav-btn {
-    opacity: 0.7;
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
-
-  .scroll-nav-btn.prev-btn {
-    left: 10px;
-  }
-
-  .scroll-nav-btn.next-btn {
-    right: 10px;
-  }
-
-  .image-counter {
-    top: 15px;
-    left: 15px;
-    font-size: 12px;
-    padding: 4px 10px;
-  }
-
-  .image-indicators {
-    bottom: 20px;
-  }
-
-  .indicator-dot {
-    width: 8px;
-    height: 8px;
-  }
-
   .fab-container {
     padding: 12px 16px;
   }
@@ -721,11 +560,6 @@ onMounted(() => {
     min-height: 250px;
   }
 
-  .hero-meta {
-    flex-direction: column;
-    gap: 8px;
-  }
-
   .main-content {
     padding: 20px 16px 100px;
   }
@@ -738,14 +572,6 @@ onMounted(() => {
   :deep(.nav-btn.base-button) {
     width: 36px;
     height: 36px;
-  }
-
-  .scroll-nav-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-    opacity: 0.8;
-    /* Всегда показываем на мобильных */
   }
 
   .meeting-point-content,

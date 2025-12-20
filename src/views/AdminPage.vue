@@ -83,6 +83,7 @@ import {
   type ExcursionCreate,
   type ExcursionDetailsCreate,
   type ExcursionDetails,
+  type ExcursionImage,
 } from '@/types/excursion'
 
 const BaseButton = defineAsyncComponent(() => import('@/components/UI/BaseButton.vue'))
@@ -108,6 +109,9 @@ const selectedCategory = ref('')
 const showAddForm = ref(false)
 const editingCard = ref<Excursion | null>(null)
 const editingDetails = ref<ExcursionDetails | null>(null)
+
+// Изображения
+const imageUploading = ref(false)
 
 // Уведомления
 const notification = ref({ message: '', type: 'success' })
@@ -205,22 +209,40 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
   }, 3000)
 }
 
-// Добавление/сохранение карточки
-const saveCard = async (data: { excursion: ExcursionCreate; details: ExcursionDetailsCreate }) => {
+// Обновляем метод saveCard для обработки изображений
+const saveCard = async (data: {
+  excursion: ExcursionCreate
+  details: ExcursionDetailsCreate
+  imagesToAdd: File[]
+  imagesToDelete: number[]
+  uploadedImages: ExcursionImage[]
+}) => {
   formLoading.value = true
+
   try {
     let excursion: Excursion
 
+    // 1. Сохраняем/обновляем экскурсию
     if (editingCard.value) {
+      // Обновляем существующую экскурсию
       excursion = await api.excursions.updateExcursion(editingCard.value.id, data.excursion)
+
+      // 2. Сохраняем детали
       if (editingDetails.value) {
         await api.excursions.updateExcursionDetails(editingCard.value.id, data.details)
       } else {
         await api.excursions.createExcursionDetails(editingCard.value.id, data.details)
       }
+
+      // 3. Обрабатываем изображения для существующей экскурсии
+      await handleExcursionImages(excursion.id, data.imagesToAdd, data.imagesToDelete)
+
       showNotification('Экскурсия успешно обновлена')
     } else {
+      // Создаем новую экскурсию
       excursion = await api.excursions.createExcursion(data.excursion)
+
+      // 2. Создаем детали если есть
       if (
         Object.values(data.details).some((value) =>
           Array.isArray(value) ? value.some((item) => item && item !== '') : value && value !== '',
@@ -228,17 +250,113 @@ const saveCard = async (data: { excursion: ExcursionCreate; details: ExcursionDe
       ) {
         await api.excursions.createExcursionDetails(excursion.id, data.details)
       }
+
+      // 3. Загружаем изображения для новой экскурсии
+      if (data.imagesToAdd.length > 0) {
+        await handleNewExcursionImages(excursion.id, data.imagesToAdd)
+      }
+
       showNotification('Экскурсия успешно создана')
     }
 
+    console.log('test')
+    // 4. Перезагружаем список экскурсий
     await loadExcursions()
+
+    // 5. Закрываем форму
     cancelForm()
+
   } catch (error: any) {
     const errorMessage = error.message || 'Ошибка сохранения экскурсии'
     showNotification(errorMessage, 'error')
     console.error('Error saving excursion:', error)
   } finally {
     formLoading.value = false
+  }
+}
+
+// Метод для обработки изображений существующей экскурсии
+const handleExcursionImages = async (
+  excursionId: number,
+  imagesToAdd: File[],
+  imagesToDelete: number[]
+) => {
+  if (imagesToDelete.length === 0 && imagesToAdd.length === 0) {
+    return // Нет изменений в изображениях
+  }
+
+  imageUploading.value = true
+  showNotification('Обработка изображений...', 'success')
+
+  try {
+    // Удаляем помеченные изображения
+    if (imagesToDelete.length > 0) {
+      await deleteExcursionImages(imagesToDelete)
+    }
+
+    // Добавляем новые изображения
+    if (imagesToAdd.length > 0) {
+      await addExcursionImages(excursionId, imagesToAdd)
+    }
+
+    showNotification('Изображения успешно обработаны', 'success')
+  } catch (error: any) {
+    showNotification(`Ошибка обработки изображений: ${error.message}`, 'error')
+    console.error('Error handling excursion images:', error)
+  } finally {
+    imageUploading.value = false
+    cancelForm()
+  }
+}
+
+// Метод для обработки изображений новой экскурсии
+const handleNewExcursionImages = async (excursionId: number, imagesToAdd: File[]) => {
+  if (imagesToAdd.length === 0) return
+
+  imageUploading.value = true
+  showNotification('Загрузка изображений...', 'success')
+
+  try {
+    await addExcursionImages(excursionId, imagesToAdd)
+    showNotification('Изображения успешно загружены', 'success')
+  } catch (error: any) {
+    showNotification(`Ошибка загрузки изображений: ${error.message}`, 'error')
+    console.error('Error adding new excursion images:', error)
+  } finally {
+    imageUploading.value = false
+  }
+}
+
+// Вспомогательный метод для добавления изображений
+const addExcursionImages = async (excursionId: number, images: File[]): Promise<void> => {
+  try {
+    // Используем bulkAddExcursionImages для массовой загрузки
+    if (images.length > 1) {
+      await api.excursions.bulkAddExcursionImages(excursionId, images)
+    } else if (images.length === 1) {
+      // Для одного файла используем addExcursionImage
+      await api.excursions.addExcursionImage(excursionId, images[0])
+    }
+  } catch (error) {
+    console.error('Error adding excursion images:', error)
+    throw error
+  }
+}
+
+// Вспомогательный метод для удаления изображений
+const deleteExcursionImages = async (imageIds: number[]): Promise<void> => {
+  try {
+    const deletePromises = imageIds.map(id =>
+      api.excursions.deleteExcursionImage(id).catch(error => {
+        console.error(`Error deleting image ${id}:`, error)
+        return false
+      })
+    )
+
+    await Promise.all(deletePromises)
+  } catch (error) {
+    console.error('Error deleting excursion images:', error)
+    throw error
   }
 }
 

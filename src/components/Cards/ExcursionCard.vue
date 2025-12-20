@@ -6,31 +6,30 @@
         :images="allImages"
         :alt-text="excursion.title"
         height="200px"
+        fit="cover"
         :show-indicators="hasMultipleImages"
         :show-navigation="hasMultipleImages"
       />
 
       <div class="card-price">{{ formatPrice(excursion.price) }}</div>
-      <span class="card-category">{{ getCategoryName(excursion.category) }}</span>
       <!-- Бейдж для ближайших экскурсий -->
       <div v-if="isUpcomingSoon" class="card-soon-badge">На этой неделе</div>
     </div>
     <div class="card-content">
-      <h3 class="card-title">{{ excursion.title }}</h3>
-      <p class="card-description">{{ excursion.description }}</p>
-
-      <!-- Используем компонент отправления -->
-      <ExcursionDeparture :date="excursion.date" />
+      <div class="content-top">
+        <h3 class="card-title">{{ excursion.title }}</h3>
+        <p class="card-description">{{ excursion.description }}</p>
+      </div>
 
       <div class="card-details">
-        <span class="card-duration">⏱ {{ formatDuration(excursion.duration) }}</span>
-
+        <!-- Используем компонент отправления -->
+        <ExcursionDeparture :date="excursion.date" />
         <!-- Красивое отображение оставшихся мест -->
         <div class="people-info" :class="getPeopleStatusClass(excursion)">
           <div class="people-icon">👥</div>
           <div class="people-count">
             <span class="people-left">{{ excursion.people_left }}</span>
-            <span class="people-label">мест</span>
+            <span class="people-label">{{ format_people_left_title(excursion.people_left) }}</span>
           </div>
           <div class="people-status-badge" :class="getPeopleStatusClass(excursion)">
             {{ getPeopleStatusText(excursion) }}
@@ -51,12 +50,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import type { Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
 import ImageCarousel from '@/components/UI/ImageCarousel.vue'
+import { format_people_left_title, formatPrice, getPeopleStatusClass, getPeopleStatusText } from '@/utils/format'
 
 interface Props {
   excursion: Excursion
@@ -69,154 +68,18 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const currentImageIndex = ref(0)
-
-// Все изображения для скролла
 const allImages = computed(() => {
   return props.excursion.images || []
 })
 
 const hasMultipleImages = computed(() => allImages.value.length > 1)
 
-// Навигация по изображениям
-const nextImage = () => {
-  if (currentImageIndex.value < allImages.value.length - 1) {
-    currentImageIndex.value++
-  } else {
-    currentImageIndex.value = 0
-  }
-}
-
-const prevImage = () => {
-  if (currentImageIndex.value > 0) {
-    currentImageIndex.value--
-  } else {
-    currentImageIndex.value = allImages.value.length - 1
-  }
-}
-
-const scrollToImage = (index: number) => {
-  currentImageIndex.value = index
-}
-
-// Переменные для обработки свайпа
-const touchStartX = ref(0)
-const touchStartY = ref(0)
-const isSwiping = ref(false)
-
-// Обработчики тач-событий
-const handleTouchStart = (e: TouchEvent) => {
-  touchStartX.value = e.touches[0].clientX
-  touchStartY.value = e.touches[0].clientY
-  isSwiping.value = false
-}
-
-const handleTouchMove = (e: TouchEvent) => {
-  if (!touchStartX.value || !touchStartY.value) return
-
-  const touchX = e.touches[0].clientX
-  const touchY = e.touches[0].clientY
-
-  // Вычисляем разницу
-  const diffX = Math.abs(touchX - touchStartX.value)
-  const diffY = Math.abs(touchY - touchStartY.value)
-
-  // Если движение в основном горизонтальное - предотвращаем скролл страницы
-  if (diffX > diffY && diffX > 5) {
-    e.preventDefault() // Предотвращаем скролл страницы
-    isSwiping.value = true
-  }
-}
-
-const handleTouchEnd = (e: TouchEvent) => {
-  if (!touchStartX.value || !isSwiping.value) return
-
-  const touchEndX = e.changedTouches[0].clientX
-  const touchEndY = e.changedTouches[0].clientY
-
-  const diffX = touchStartX.value - touchEndX
-  const minSwipeDistance = 30
-
-  if (Math.abs(diffX) > minSwipeDistance) {
-    if (diffX > 0) {
-      nextImage() // Свайп влево
-    } else {
-      prevImage() // Свайп вправо
-    }
-  }
-
-  // Сброс
-  touchStartX.value = 0
-  touchStartY.value = 0
-  isSwiping.value = false
-}
-
-// Привязать события к контейнеру
-let scrollContainer: HTMLElement | null = null
-
-onMounted(() => {
-  scrollContainer = document.querySelector('.image-scroll-container')
-  if (scrollContainer) {
-    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: false })
-    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: false })
-    scrollContainer.addEventListener('touchend', handleTouchEnd, { passive: true })
-  }
-})
-
-onUnmounted(() => {
-  if (scrollContainer) {
-    scrollContainer.removeEventListener('touchstart', handleTouchStart)
-    scrollContainer.removeEventListener('touchmove', handleTouchMove)
-    scrollContainer.removeEventListener('touchend', handleTouchEnd)
-  }
-})
-
-// Проверка что экскурсия скоро (в течение недели)
 const isUpcomingSoon = computed((): boolean => {
   const date = new Date(props.excursion.date)
   const now = new Date()
   const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   return date > now && date <= weekFromNow
 })
-
-// Получение класса статуса мест
-const getPeopleStatusClass = (excursion: Excursion) => {
-  if (excursion.people_left === 0) return 'sold-out'
-  if (excursion.people_left <= excursion.people_amount * 0.2) return 'few-left'
-  return 'available'
-}
-
-// Получение текста статуса мест
-const getPeopleStatusText = (excursion: Excursion) => {
-  if (excursion.people_left === 0) return 'Мест нет'
-  if (excursion.people_left <= excursion.people_amount * 0.2) return 'Мало мест'
-  return 'Есть места'
-}
-
-// Вспомогательные функции форматирования
-const formatPrice = (price: number): string => {
-  return `от ${price.toLocaleString('ru-RU')} ₽`
-}
-
-const formatDuration = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  if (hours > 0) {
-    return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
-  }
-  return `${mins} мин`
-}
-
-const getCategoryName = (category: string): string => {
-  const categories: { [key: string]: string } = {
-    горные: 'Горные',
-    морские: 'Морские',
-    исторические: 'Исторические',
-    природа: 'Природа',
-    городские: 'Городские',
-  }
-  return categories[category] || category
-}
 </script>
 
 <style scoped>
@@ -231,6 +94,10 @@ const getCategoryName = (category: string): string => {
   width: 100%;
   border: 1px solid var(--border-light);
   position: relative;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .card:hover {
@@ -243,6 +110,7 @@ const getCategoryName = (category: string): string => {
   position: relative;
   height: 200px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* Стили для скролла фоток */
@@ -381,19 +249,6 @@ const getCategoryName = (category: string): string => {
   z-index: 2;
 }
 
-.card-category {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  background: var(--green-primary);
-  color: var(--text-white);
-  padding: 5px 12px;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  z-index: 2;
-}
-
 .card-soon-badge {
   position: absolute;
   bottom: 15px;
@@ -408,7 +263,17 @@ const getCategoryName = (category: string): string => {
 }
 
 .card-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   padding: 25px;
+  min-height: 0;
+}
+
+.content-top {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .card-title {
@@ -427,10 +292,10 @@ const getCategoryName = (category: string): string => {
 
 .card-details {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
   margin-bottom: 20px;
-  gap: 15px;
 }
 
 .card-duration {
@@ -442,6 +307,7 @@ const getCategoryName = (category: string): string => {
 /* Стили для информации о местах */
 .people-info {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
@@ -449,6 +315,7 @@ const getCategoryName = (category: string): string => {
   background: var(--green-bg-light);
   border: 1px solid var(--border-green-light);
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .people-info.available {
@@ -574,11 +441,6 @@ const getCategoryName = (category: string): string => {
   .card-price {
     font-size: 1rem;
     padding: 6px 12px;
-  }
-
-  .card-category {
-    font-size: 0.7rem;
-    padding: 4px 10px;
   }
 }
 

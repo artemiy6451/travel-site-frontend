@@ -70,8 +70,9 @@ const formattedDate = computed((): string => {
   padding: 8px 12px;
   background: var(--green-bg-light);
   border-radius: 8px;
-  border-left: 4px solid var(--green-primary);
+  border: 1px solid var(--shadow-green);
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .departure-icon {
@@ -105,9 +106,8 @@ const formattedDate = computed((): string => {
 /* Адаптивность */
 @media (max-width: 768px) {
   .card-departure {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+    justify-content: center;
+    gap: 10px;
   }
 }
 </style>

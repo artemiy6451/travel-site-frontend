@@ -10,21 +10,13 @@
       </div>
 
       <div class="fact-card">
-        <div class="fact-icon">⏱️</div>
-        <div class="fact-content">
-          <div class="fact-label">Длительность</div>
-          <div class="fact-value">{{ formatDuration(excursion.duration) }}</div>
-        </div>
-      </div>
-
-      <div class="fact-card">
         <div class="fact-icon">👥</div>
         <div class="fact-content">
           <div class="fact-label">Свободные места</div>
           <div class="people-info" :class="getPeopleStatusClass(excursion)">
             <div class="people-count">
               <span class="people-left">{{ excursion.people_left }}</span>
-              <span class="people-label">мест</span>
+              <span class="people-label">{{ format_people_left_title(excursion.people_left) }}</span>
             </div>
             <div class="people-status-badge" :class="getPeopleStatusClass(excursion)">
               {{ getPeopleStatusText(excursion) }}
@@ -56,6 +48,7 @@
 
 <script setup lang="ts">
 import type { Excursion } from '@/types/excursion'
+import { format_people_left_title } from '@/utils/format';
 
 interface Props {
   excursion: Excursion
@@ -88,15 +81,6 @@ const getPeopleStatusText = (excursion: Excursion) => {
 // Вспомогательные функции форматирования
 const formatPrice = (price: number): string => {
   return `${price.toLocaleString('ru-RU')} ₽`
-}
-
-const formatDuration = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  if (hours > 0) {
-    return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
-  }
-  return `${mins} мин`
 }
 
 const formatDate = (dateString: string | Date): string => {

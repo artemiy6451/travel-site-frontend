@@ -10,6 +10,7 @@
           <img
             :src="getImageUrl(image)"
             :alt="altText || `Изображение ${index + 1}`"
+            :style="{ 'object-fit': fit }"
             @error="handleImageError"
             loading="lazy"
             class="carousel-image"
@@ -33,7 +34,7 @@
       <button
         v-if="showNavigation && hasMultipleImages && currentIndex > 0"
         class="carousel-nav-btn carousel-prev-btn"
-        @click.stop="prevSlide"
+        @click.stop="prevSlide(); stopAutoPlay()"
         aria-label="Предыдущее фото"
       >
         ‹
@@ -41,7 +42,7 @@
       <button
         v-if="showNavigation && hasMultipleImages && currentIndex < images.length - 1"
         class="carousel-nav-btn carousel-next-btn"
-        @click.stop="nextSlide"
+        @click.stop="nextSlide(); stopAutoPlay()"
         aria-label="Следующее фото"
       >
         ›
@@ -55,6 +56,7 @@
         v-if="images.length > 0"
         :src="getImageUrl(images[0])"
         :alt="altText"
+        :style="{ 'object-fit': fit }"
         @error="handleImageError"
         loading="lazy"
         class="carousel-image"
@@ -77,6 +79,7 @@ interface Props {
   images: any[]
   // Высота карусели
   height?: string
+  fit?: string
   // Текст для alt атрибута
   altText?: string
   // Показывать индикаторы
@@ -93,6 +96,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   height: '300px',
+  fit: "contain",
   showIndicators: true,
   showNavigation: true,
   autoPlay: 0,
@@ -146,6 +150,7 @@ const prevSlide = () => {
 
 const goToSlide = (index: number) => {
   currentIndex.value = index
+  stopAutoPlay()
   emit('slide-change', currentIndex.value)
 }
 
@@ -192,8 +197,10 @@ const handleTouchEnd = (e: TouchEvent) => {
   if (Math.abs(diffX) > minSwipeDistance) {
     if (diffX > 0) {
       nextSlide() // Свайп влево
+      stopAutoPlay()
     } else {
       prevSlide() // Свайп вправо
+      stopAutoPlay()
     }
   }
 
@@ -290,7 +297,7 @@ const resumeAutoPlay = () => {
 .carousel-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 0.3s ease;
 }
 

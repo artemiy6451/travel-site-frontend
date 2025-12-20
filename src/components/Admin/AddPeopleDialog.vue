@@ -37,7 +37,8 @@
             </li>
             <li>
               После добавления:
-              <strong>{{ (card?.people_left || 0) - localAdditionalPeople }}</strong> свободных мест
+              <strong>{{ (card?.people_left || 0) - localAdditionalPeople }}</strong> {{
+              format_people_left_title((card?.people_left || 0) - localAdditionalPeople) }}
             </li>
           </ul>
         </div>
@@ -64,6 +65,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { type Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
+import { format_people_left_title } from '@/utils/format'
 
 interface Props {
   visible: boolean

@@ -1,6 +1,8 @@
 import { cache } from '@/utils/cache'
 
-const API_BASE_URL = import.meta.env.PROD ? '/api' : 'http://192.168.0.108:8000'
+const API_BASE_URL = import.meta.env.PROD
+  ? '/api'
+  : (import.meta.env.VITE_APP_API_URL || '');
 
 export class BaseApi {
   protected API_BASE_URL = API_BASE_URL

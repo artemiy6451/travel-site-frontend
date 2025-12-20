@@ -10,42 +10,18 @@
       />
       <span class="search-icon">🔍</span>
     </div>
-
-    <div class="filters">
-      <BaseButton
-        v-for="filter in filters"
-        :key="filter.id"
-        :variant="activeFilter === filter.id ? 'primary' : 'secondary'"
-        size="sm"
-        @click="handleFilterClick(filter.id)"
-        class="filter-btn"
-      >
-        {{ filter.name }}
-      </BaseButton>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import BaseButton from '@/components/UI/BaseButton.vue'
-
-interface Filter {
-  id: string
-  name: string
-}
-
 interface Props {
-  filters: Filter[]
-  activeFilter: string
   searchQuery: string
   searchPlaceholder?: string
 }
 
 interface Emits {
   (e: 'update:searchQuery', value: string): void
-  (e: 'update:activeFilter', value: string): void
   (e: 'search', value: string): void
-  (e: 'filter', value: string): void
   (e: 'clear'): void
 }
 
@@ -61,30 +37,9 @@ const handleSearchInput = (event: Event) => {
   emit('update:searchQuery', value)
   emit('search', value)
 }
-
-const handleFilterClick = (filterId: string) => {
-  emit('update:activeFilter', filterId)
-  emit('filter', filterId)
-}
-
-// Метод для очистки фильтров (можно вызывать из родителя через ref)
-const clearFilters = () => {
-  emit('update:searchQuery', '')
-  emit('update:activeFilter', 'all')
-  emit('clear')
-}
-
-// Экспортируем метод для использования в родительском компоненте
-defineExpose({
-  clearFilters,
-})
 </script>
 
 <style scoped>
-.filters-section {
-  margin-bottom: 40px;
-}
-
 .search-box {
   position: relative;
   max-width: 400px;
@@ -120,55 +75,10 @@ defineExpose({
   color: var(--green-primary);
 }
 
-.filters {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-:deep(.filter-btn.base-button) {
-  border-radius: 25px;
-  font-weight: 500;
-  box-shadow: 0 2px 8px var(--shadow-default);
-  border: 2px solid var(--border-green-medium);
-}
-
-:deep(.filter-btn.base-button.variant-secondary) {
-  background: var(--white);
-  color: var(--text-medium);
-  border-color: var(--border-green-medium);
-}
-
-:deep(.filter-btn.base-button.variant-secondary:hover:not(.disabled)) {
-  border-color: var(--green-light);
-  color: var(--green-darker);
-  background: var(--green-bg-light);
-  transform: translateY(-2px);
-}
-
-:deep(.filter-btn.base-button.variant-primary) {
-  box-shadow: 0 4px 15px var(--shadow-green);
-}
-
 /* Адаптивность */
-@media (max-width: 768px) {
-  .filters {
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding-bottom: 10px;
-    padding-top: 10px;
-  }
-}
-
 @media (max-width: 480px) {
   .search-box {
     max-width: 100%;
-  }
-
-  :deep(.filter-btn.base-button) {
-    font-size: 0.8rem;
-    padding: 8px 16px;
   }
 }
 </style>

@@ -11,37 +11,15 @@
           <div class="form-row">
             <div class="form-group">
               <label>Название *</label>
-              <input
-                v-model="formData.title"
-                type="text"
-                required
-                placeholder="Название экскурсии"
-                :disabled="loading"
-              />
-            </div>
-
-            <div class="form-group">
-              <label>Категория *</label>
-              <select v-model="formData.category" required :disabled="loading">
-                <option value="">Выберите категорию</option>
-                <option value="горные">Горные</option>
-                <option value="морские">Морские</option>
-                <option value="исторические">Исторические</option>
-                <option value="природа">Природа</option>
-                <option value="городские">Городские</option>
-              </select>
+              <input v-model="formData.title" type="text" required placeholder="Название экскурсии"
+                :disabled="loading" />
             </div>
           </div>
 
           <div class="form-group">
             <label>Краткое описание *</label>
-            <textarea
-              v-model="formData.description"
-              required
-              placeholder="Краткое описание для карточки"
-              rows="3"
-              :disabled="loading"
-            ></textarea>
+            <textarea v-model="formData.description" required placeholder="Краткое описание для карточки" rows="3"
+              :disabled="loading"></textarea>
           </div>
 
           <div class="form-row">
@@ -52,40 +30,22 @@
 
             <div class="form-group">
               <label>Цена (руб) *</label>
-              <input
-                v-model.number="formData.price"
-                type="number"
-                required
-                min="0"
-                placeholder="2500"
-                :disabled="loading"
-              />
+              <input v-model.number="formData.price" type="number" required min="0" placeholder="2500"
+                :disabled="loading" />
             </div>
 
             <div class="form-group">
               <label>Длительность (мин) *</label>
-              <input
-                v-model.number="formData.duration"
-                type="number"
-                required
-                min="0"
-                placeholder="180"
-                :disabled="loading"
-              />
+              <input v-model.number="formData.duration" type="number" required min="0" placeholder="180"
+                :disabled="loading" />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>Количество человек *</label>
-              <input
-                v-model.number="formData.people_amount"
-                type="number"
-                required
-                min="1"
-                placeholder="8"
-                :disabled="loading"
-              />
+              <input v-model.number="formData.people_amount" type="number" required min="1" placeholder="8"
+                :disabled="loading" />
             </div>
           </div>
 
@@ -100,29 +60,14 @@
                 <!-- Компонент карусели с возможностью удаления -->
                 <div class="image-carousel-admin">
                   <div class="carousel-scroll-container">
-                    <div
-                      class="carousel-scroll-track"
-                      :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
-                    >
-                      <div
-                        v-for="(image, index) in uploadedImages"
-                        :key="image.id"
-                        class="carousel-image-item"
-                      >
-                        <img
-                          :src="image.url"
-                          :alt="`Фото ${index + 1}`"
-                          class="carousel-image"
-                        />
+                    <div class="carousel-scroll-track"
+                      :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }">
+                      <div v-for="(image, index) in uploadedImages" :key="image.id" class="carousel-image-item">
+                        <img :src="image.url" :alt="`Фото ${index + 1}`" class="carousel-image" />
 
                         <!-- Кнопка удаления -->
-                        <button
-                          type="button"
-                          class="delete-image-btn"
-                          @click="removeUploadedImage(index)"
-                          :disabled="uploadedImages.length <= 1"
-                          title="Удалить фото"
-                        >
+                        <button type="button" class="delete-image-btn" @click="removeUploadedImage(index)"
+                          :disabled="uploadedImages.length <= 1" title="Удалить фото">
                           🗑️
                         </button>
                       </div>
@@ -130,33 +75,17 @@
 
                     <!-- Индикаторы -->
                     <div class="carousel-indicators" v-if="uploadedImages.length > 1">
-                      <button
-                        v-for="(_, index) in uploadedImages"
-                        :key="index"
-                        class="indicator-dot"
-                        type="button"
-                        :class="{ active: currentImageIndex === index }"
-                        @click.stop="goToImage(index)"
-                      ></button>
+                      <button v-for="(_, index) in uploadedImages" :key="index" class="indicator-dot" type="button"
+                        :class="{ active: currentImageIndex === index }" @click.stop="goToImage(index)"></button>
                     </div>
 
                     <!-- Кнопки навигации -->
-                    <button
-                      v-if="currentImageIndex > 0"
-                      class="carousel-nav-btn prev-btn"
-                      @click.stop="prevImage"
-                      title="Предыдущее фото"
-                      type="button"
-                    >
+                    <button v-if="currentImageIndex > 0" class="carousel-nav-btn prev-btn" @click.stop="prevImage"
+                      title="Предыдущее фото" type="button">
                       ‹
                     </button>
-                    <button
-                      v-if="currentImageIndex < uploadedImages.length - 1"
-                      class="carousel-nav-btn next-btn"
-                      @click.stop="nextImage"
-                      title="Следующее фото"
-                      type="button"
-                    >
+                    <button v-if="currentImageIndex < uploadedImages.length - 1" class="carousel-nav-btn next-btn"
+                      @click.stop="nextImage" title="Следующее фото" type="button">
                       ›
                     </button>
                   </div>
@@ -167,23 +96,11 @@
               <div class="image-upload-section">
                 <!-- Кнопки загрузки -->
                 <div class="upload-options">
-                  <input
-                    type="file"
-                    ref="fileInput"
-                    accept="image/*"
-                    @change="handleFileSelect"
-                    multiple
-                    class="file-input"
-                    :disabled="loading"
-                  />
+                  <input type="file" ref="fileInput" accept="image/*" @change="handleFileSelect" multiple
+                    class="file-input" :disabled="loading" />
 
                   <div class="upload-buttons">
-                    <button
-                      type="button"
-                      class="upload-btn primary"
-                      @click="triggerFileInput"
-                      :disabled="loading"
-                    >
+                    <button type="button" class="upload-btn primary" @click="triggerFileInput" :disabled="loading">
                       📁 Выбрать файлы
                     </button>
                   </div>
@@ -222,47 +139,27 @@
           <!-- Полное описание маршрута -->
           <div class="form-group">
             <label>Полное описание маршрута</label>
-            <textarea
-              v-model="formData.details.description"
-              placeholder="Подробное описание маршрута, особенности, что увидят туристы..."
-              rows="4"
-              :disabled="loading"
-            ></textarea>
+            <textarea v-model="formData.details.description"
+              placeholder="Подробное описание маршрута, особенности, что увидят туристы..." rows="4"
+              :disabled="loading"></textarea>
             <small>Это описание будет отображаться на странице экскурсии</small>
           </div>
 
           <!-- Место сбора -->
           <div class="form-group">
             <label>Место сбора</label>
-            <input
-              v-model="formData.details.meeting_point"
-              type="text"
-              placeholder="Например: Центральная площадь, у фонтана"
-              :disabled="loading"
-            />
+            <input v-model="formData.details.meeting_point" type="text"
+              placeholder="Например: Центральная площадь, у фонтана" :disabled="loading" />
           </div>
 
           <!-- Что входит в экскурсию -->
           <div class="form-group">
             <label>Что входит в экскурсию</label>
             <div class="array-input">
-              <div
-                v-for="(_, index) in formData.details.inclusions"
-                :key="index"
-                class="array-item"
-              >
-                <input
-                  v-model="formData.details.inclusions[index]"
-                  type="text"
-                  :placeholder="`Пункт ${index + 1}`"
-                  :disabled="loading"
-                />
-                <button
-                  type="button"
-                  class="remove-btn"
-                  @click="removeInclusion(index)"
-                  :disabled="loading"
-                >
+              <div v-for="(_, index) in formData.details.inclusions" :key="index" class="array-item">
+                <input v-model="formData.details.inclusions[index]" type="text" :placeholder="`Пункт ${index + 1}`"
+                  :disabled="loading" />
+                <button type="button" class="remove-btn" @click="removeInclusion(index)" :disabled="loading">
                   ×
                 </button>
               </div>
@@ -270,32 +167,17 @@
                 + Добавить пункт
               </button>
             </div>
-            <small
-              >Перечислите что включено в стоимость (трансфер, питание, услуги гида и т.д.)</small
-            >
+            <small>Перечислите что включено в стоимость (трансфер, питание, услуги гида и т.д.)</small>
           </div>
 
           <!-- Требования к участникам -->
           <div class="form-group">
             <label>Требования к участникам</label>
             <div class="array-input">
-              <div
-                v-for="(_, index) in formData.details.requirements"
-                :key="index"
-                class="array-item"
-              >
-                <input
-                  v-model="formData.details.requirements[index]"
-                  type="text"
-                  :placeholder="`Требование ${index + 1}`"
-                  :disabled="loading"
-                />
-                <button
-                  type="button"
-                  class="remove-btn"
-                  @click="removeRequirement(index)"
-                  :disabled="loading"
-                >
+              <div v-for="(_, index) in formData.details.requirements" :key="index" class="array-item">
+                <input v-model="formData.details.requirements[index]" type="text"
+                  :placeholder="`Требование ${index + 1}`" :disabled="loading" />
+                <button type="button" class="remove-btn" @click="removeRequirement(index)" :disabled="loading">
                   ×
                 </button>
               </div>
@@ -310,23 +192,10 @@
           <div class="form-group">
             <label>Рекомендации</label>
             <div class="array-input">
-              <div
-                v-for="(_, index) in formData.details.recommendations"
-                :key="index"
-                class="array-item"
-              >
-                <input
-                  v-model="formData.details.recommendations[index]"
-                  type="text"
-                  :placeholder="`Рекомендация ${index + 1}`"
-                  :disabled="loading"
-                />
-                <button
-                  type="button"
-                  class="remove-btn"
-                  @click="removeRecommendation(index)"
-                  :disabled="loading"
-                >
+              <div v-for="(_, index) in formData.details.recommendations" :key="index" class="array-item">
+                <input v-model="formData.details.recommendations[index]" type="text"
+                  :placeholder="`Рекомендация ${index + 1}`" :disabled="loading" />
+                <button type="button" class="remove-btn" @click="removeRecommendation(index)" :disabled="loading">
                   ×
                 </button>
               </div>
@@ -341,50 +210,27 @@
           <div class="form-group">
             <label>Программа тура</label>
             <div class="itinerary-list">
-              <div
-                v-for="(item, index) in formData.details.itinerary"
-                :key="index"
-                class="itinerary-item"
-              >
+              <div v-for="(item, index) in formData.details.itinerary" :key="index" class="itinerary-item">
                 <div class="itinerary-header">
                   <h4>Пункт {{ index + 1 }}</h4>
-                  <button
-                    type="button"
-                    class="remove-btn"
-                    @click="removeItineraryItem(index)"
-                    :disabled="loading"
-                  >
+                  <button type="button" class="remove-btn" @click="removeItineraryItem(index)" :disabled="loading">
                     ×
                   </button>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label>Время</label>
-                    <input
-                      v-model="item.time"
-                      type="text"
-                      placeholder="09:00"
-                      :disabled="loading"
-                    />
+                    <input v-model="item.time" type="text" placeholder="09:00" :disabled="loading" />
                   </div>
                   <div class="form-group">
                     <label>Заголовок</label>
-                    <input
-                      v-model="item.title"
-                      type="text"
-                      placeholder="Сбор группы"
-                      :disabled="loading"
-                    />
+                    <input v-model="item.title" type="text" placeholder="Сбор группы" :disabled="loading" />
                   </div>
                 </div>
                 <div class="form-group">
                   <label>Описание</label>
-                  <textarea
-                    v-model="item.description"
-                    placeholder="Подробное описание этапа..."
-                    rows="2"
-                    :disabled="loading"
-                  ></textarea>
+                  <textarea v-model="item.description" placeholder="Подробное описание этапа..." rows="2"
+                    :disabled="loading"></textarea>
                 </div>
               </div>
               <button type="button" class="add-btn" @click="addItineraryItem" :disabled="loading">
@@ -395,21 +241,11 @@
         </div>
 
         <div class="form-actions">
-          <BaseButton
-            type="button"
-            variant="secondary"
-            @click="handleCancel"
-            :disabled="loading || imageUploading"
-          >
+          <BaseButton type="button" variant="secondary" @click="handleCancel" :disabled="loading">
             Отмена
           </BaseButton>
 
-          <BaseButton
-            type="submit"
-            variant="primary"
-            :loading="loading || imageUploading"
-            :loading-text="getLoadingText"
-          >
+          <BaseButton type="submit" variant="primary" :loading="loading" :loading-text="getLoadingText">
             {{ editingCard ? 'Сохранить' : 'Добавить' }}
           </BaseButton>
         </div>
@@ -432,7 +268,13 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'submit', data: { excursion: ExcursionCreate; details: any }): void
+  (e: 'submit', data: {
+    excursion: ExcursionCreate
+    details: any
+    imagesToAdd: File[]
+    imagesToDelete: number[]
+    uploadedImages: ExcursionImage[]
+  }): void
   (e: 'cancel'): void
   (e: 'update:visible', value: boolean): void
 }
@@ -452,7 +294,6 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const uploadedImages = ref<ExcursionImage[]>([]) // Массив загруженных изображений
 const currentImageIndex = ref(0)
 const uploadStatus = ref<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
-const imageUploading = ref(false)
 
 // Массивы для отслеживания изменений
 const imagesToDelete = ref<number[]>([]) // ID изображений для удаления
@@ -460,7 +301,6 @@ const imagesToAdd = ref<File[]>([]) // Новые файлы для загруз
 
 // Вычисляемое свойство для текста загрузки
 const getLoadingText = computed(() => {
-  if (imageUploading.value) return 'Загрузка изображений...'
   if (props.loading) return 'Сохранение...'
   return 'Загрузка...'
 })
@@ -468,7 +308,6 @@ const getLoadingText = computed(() => {
 // Данные формы
 const formData = ref({
   title: '',
-  category: '',
   description: '',
   date: new Date(),
   price: 0,
@@ -521,7 +360,6 @@ const handleFileSelect = async (event: Event) => {
         id: -Date.now() - successfulValidations, // Отрицательный ID для временных изображений
         url: previewUrl,
         excursion_id: props.editingCard?.id || 0,
-        is_temporary: true,
         file: file
       })
 
@@ -607,67 +445,6 @@ const removeUploadedImage = async (index: number) => {
   showUploadStatus('info', 'Изображение помечено для удаления')
 }
 
-// Загрузка новых изображений на сервер
-const uploadNewImages = async (excursionId: number): Promise<ExcursionImage[]> => {
-  if (imagesToAdd.value.length === 0) return []
-
-  imageUploading.value = true
-  showUploadStatus('info', `Загрузка ${imagesToAdd.value.length} изображений...`)
-
-  try {
-    const uploadedImagesData = await api.excursions.bulkAddExcursionImages(excursionId, imagesToAdd.value)
-
-    // Обновляем uploadedImages с данными с сервера
-    uploadedImagesData.forEach((newImage, index) => {
-      const tempImageIndex = uploadedImages.value.findIndex(img =>
-        img.id < 0 && img.file === imagesToAdd.value[index]
-      )
-      if (tempImageIndex !== -1) {
-        uploadedImages.value[tempImageIndex] = newImage
-      }
-    })
-
-    // Очищаем временный массив
-    imagesToAdd.value = []
-
-    showUploadStatus('success', 'Изображения успешно загружены')
-    return uploadedImagesData
-  } catch (error) {
-    console.error('Error uploading images:', error)
-    showUploadStatus('error', 'Ошибка загрузки изображений')
-    throw error
-  } finally {
-    imageUploading.value = false
-  }
-}
-
-// Удаление изображений с сервера
-const deleteMarkedImages = async (): Promise<void> => {
-  if (imagesToDelete.value.length === 0) return
-
-  showUploadStatus('info', `Удаление ${imagesToDelete.value.length} изображений...`)
-
-  try {
-    const deletePromises = imagesToDelete.value.map(id =>
-      api.excursions.deleteExcursionImage(id).catch(error => {
-        console.error(`Error deleting image ${id}:`, error)
-        return false
-      })
-    )
-
-    await Promise.all(deletePromises)
-
-    // Очищаем список
-    imagesToDelete.value = []
-
-    showUploadStatus('success', 'Изображения удалены')
-  } catch (error) {
-    console.error('Error deleting images:', error)
-    showUploadStatus('error', 'Ошибка удаления изображений')
-    throw error
-  }
-}
-
 // Навигация по карусели
 const nextImage = () => {
   if (currentImageIndex.value < uploadedImages.value.length - 1) {
@@ -698,13 +475,11 @@ const handleSubmit = async () => {
   // Валидация
   if (
     !formData.value.title ||
-    !formData.value.category ||
     !formData.value.description ||
     !formData.value.date ||
     formData.value.price <= 0 ||
     formData.value.duration <= 0 ||
-    formData.value.people_amount <= 0 ||
-    props.editingCard === null
+    formData.value.people_amount <= 0
   ) {
     showUploadStatus('error', 'Заполните все обязательные поля')
     return
@@ -719,7 +494,6 @@ const handleSubmit = async () => {
   // Подготовка данных экскурсии
   const excursionData: ExcursionCreate = {
     title: formData.value.title,
-    category: formData.value.category,
     description: formData.value.description,
     date: formData.value.date,
     price: formData.value.price,
@@ -739,12 +513,13 @@ const handleSubmit = async () => {
     itinerary: formData.value.details.itinerary.filter((item) => item.title.trim() !== ''),
   }
 
-  uploadNewImages(props.editingCard.id)
-  deleteMarkedImages()
   // Отправка данных через emit
   emit('submit', {
     excursion: excursionData,
-    details: cleanedDetails
+    details: cleanedDetails,
+    imagesToAdd: imagesToAdd.value,
+    imagesToDelete: imagesToDelete.value,
+    uploadedImages: uploadedImages.value
   })
 }
 
@@ -797,7 +572,6 @@ const removeItineraryItem = (index: number) => {
 const resetForm = () => {
   formData.value = {
     title: '',
-    category: '',
     description: '',
     date: new Date(),
     price: 0,
@@ -826,7 +600,6 @@ const resetForm = () => {
   currentImageIndex.value = 0
   imagesToDelete.value = []
   imagesToAdd.value = []
-  imageUploading.value = false
 }
 
 // Загрузка изображений существующей экскурсии
@@ -847,7 +620,6 @@ watch(
     if (card) {
       formData.value = {
         title: card.title,
-        category: card.category,
         description: card.description,
         date: card.date,
         price: card.price,
@@ -892,12 +664,12 @@ watch(
         itinerary: details.itinerary?.length
           ? details.itinerary
           : [
-              {
-                time: '',
-                title: '',
-                description: '',
-              },
-            ],
+            {
+              time: '',
+              title: '',
+              description: '',
+            },
+          ],
         meeting_point: details.meeting_point || '',
         requirements: details.requirements?.length ? details.requirements : [''],
         recommendations: details.recommendations?.length ? details.recommendations : [''],
@@ -921,18 +693,6 @@ const handleCancel = () => {
   emit('cancel')
   emit('update:visible', false)
 }
-
-// Очистка при размонтировании
-onMounted(() => {
-  // Освобождаем временные URL при размонтировании компонента
-  return () => {
-    uploadedImages.value.forEach(img => {
-      if (img.is_temporary) {
-        URL.revokeObjectURL(img.url)
-      }
-    })
-  }
-})
 </script>
 
 <style scoped>

@@ -15,7 +15,6 @@
           <tr>
             <th>Изображение</th>
             <th>Название</th>
-            <th>Категория</th>
             <th>Дата отправления</th>
             <th>Цена</th>
             <th>Места</th>
@@ -28,7 +27,7 @@
             <!-- Строка 1: Фото -->
             <td class="image-cell">
               <div class="card-image-preview">
-                <img :src="card.image_url" :alt="card.title" @error="handleImageError" />
+                <img :src="card.images[0].url" :alt="card.title" @error="handleImageError" />
               </div>
             </td>
 
@@ -36,13 +35,6 @@
             <td class="title-cell">
               <strong class="card-title">{{ card.title }}</strong>
               <p class="card-description">{{ card.description }}</p>
-            </td>
-
-            <!-- Строка 3: Категория -->
-            <td class="category-cell">
-              <span class="category-badge" :class="card.category">
-                {{ getCategoryName(card.category) }}
-              </span>
             </td>
 
             <!-- Строка 3: Дата -->
@@ -178,13 +170,14 @@
 
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import { handleImageError } from '@/utils/image'
 import { type Excursion } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
 import StatsComponent from '@/components/UI/StatsComponent.vue'
 import AddPeopleDialog from '@/components/Admin/AddPeopleDialog.vue'
 import BusNumberDialog from '@/components/Admin/BusNumberDialog.vue'
+import { getPeopleStatusClass, getPeopleStatusText, getProgressClass, getProgressPercentage } from '@/utils/format'
+import { handleImageError } from '@/utils/image'
 
 interface Props {
   cards: Excursion[]
@@ -231,47 +224,6 @@ watchEffect(() => {
     totalSpots: cards.reduce((total, card) => total + card.people_left, 0),
   }
 })
-
-// Получение названия категории
-const getCategoryName = (category: string) => {
-  const categories: { [key: string]: string } = {
-    горные: 'Горные',
-    морские: 'Морские',
-    исторические: 'Исторические',
-    природа: 'Природа',
-    городские: 'Городские',
-  }
-  return categories[category] || category
-}
-
-// Получение процента заполненности
-const getProgressPercentage = (card: Excursion) => {
-  if (card.people_amount === 0) return 0
-  const occupied = card.people_amount - card.people_left
-  return (occupied / card.people_amount) * 100
-}
-
-// Получение класса для прогресс-бара
-const getProgressClass = (card: Excursion) => {
-  const percentage = getProgressPercentage(card)
-  if (percentage >= 90) return 'danger'
-  if (percentage >= 70) return 'warning'
-  return 'success'
-}
-
-// Получение класса статуса мест
-const getPeopleStatusClass = (card: Excursion) => {
-  if (card.people_left === 0) return 'sold-out'
-  if (card.people_left <= card.people_amount * 0.2) return 'few-left'
-  return 'available'
-}
-
-// Получение текста статуса мест
-const getPeopleStatusText = (card: Excursion) => {
-  if (card.people_left === 0) return 'Мест нет'
-  if (card.people_left <= card.people_amount * 0.2) return 'Мало мест'
-  return 'Есть места'
-}
 
 // Открытие диалога добавления мест
 const openAddPeopleDialog = (card: Excursion) => {
@@ -429,15 +381,6 @@ const handleDialogClose = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.category-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  background: var(--green-bg-light);
-  color: var(--green-dark);
 }
 
 .date-container {
@@ -753,14 +696,12 @@ const handleDialogClose = () => {
     max-width: none;
     white-space: normal;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     color: var(--text-medium);
   }
 
   /* Строка 3: Вся информация в одной строке */
-  .category-cell,
   .date-cell,
   .price-cell,
   .people-cell {
@@ -827,7 +768,6 @@ const handleDialogClose = () => {
     height: 140px;
   }
 
-  .category-cell,
   .date-cell,
   .price-cell,
   .people-cell {
@@ -895,17 +835,11 @@ const handleDialogClose = () => {
     font-size: 0.85rem;
   }
 
-  .category-cell,
   .date-cell,
   .price-cell,
   .people-cell {
     gap: 10px;
     padding: 8px 12px;
-  }
-
-  .category-badge {
-    font-size: 0.7rem;
-    padding: 2px 8px;
   }
 
   .status-badge {
@@ -954,7 +888,6 @@ const handleDialogClose = () => {
     height: 100px;
   }
 
-  .category-cell,
   .date-cell,
   .price-cell,
   .people-cell {
@@ -992,7 +925,6 @@ const handleDialogClose = () => {
     height: 100px;
   }
 
-  .category-cell,
   .date-cell,
   .price-cell,
   .people-cell {
@@ -1027,7 +959,6 @@ const handleDialogClose = () => {
     height: 90px;
   }
 
-  .category-cell,
   .date-cell,
   .price-cell,
   .people-cell {

@@ -3,15 +3,10 @@
     <h1 class="section-title">Экскурсионные маршруты</h1>
     <ExcursionFilters
       ref="filtersRef"
-      :filters="filters"
-      :active-filter="activeFilter"
       :search-query="searchQuery"
       search-placeholder="Поиск маршрутов..."
       @update:search-query="handleSearchQueryUpdate"
-      @update:active-filter="handleActiveFilterUpdate"
       @search="handleSearch"
-      @filter="handleFilter"
-      @clear="handleFiltersClear"
     />
 
     <DataState
@@ -36,13 +31,6 @@
         <!-- Состояние когда нет результатов -->
         <div v-else class="no-results">
           <p>На ближайшее время экскурсий не запланировано</p>
-          <BaseButton
-            v-if="activeFilter !== 'all' || searchQuery"
-            variant="secondary"
-            @click="clearFilters"
-          >
-            Очистить фильтры
-          </BaseButton>
         </div>
       </div>
     </DataState>
@@ -54,18 +42,11 @@ import { ref, computed, onMounted } from 'vue'
 import { api } from '@/utils/api'
 import type { Excursion } from '@/types/excursion'
 import { useRouter } from 'vue-router'
-import BaseButton from '@/components/UI/BaseButton.vue'
 import ExcursionCard from '@/components/Cards/ExcursionCard.vue'
 import DataState from '@/components/UI/DataState.vue'
 import ExcursionFilters from '@/components/Filters/ExcursionFilters.vue'
 
 const router = useRouter()
-const filtersRef = ref()
-
-interface Filter {
-  id: string
-  name: string
-}
 
 // Состояние загрузки и ошибок
 const loading = ref(false)
@@ -79,17 +60,6 @@ const viewDetails = (excursionId: number) => {
   router.push(`/excursion/${excursionId}`)
 }
 
-// Фильтры
-const filters = ref<Filter[]>([
-  { id: 'all', name: 'Все' },
-  { id: 'горные', name: 'Горные' },
-  { id: 'морские', name: 'Морские' },
-  { id: 'исторические', name: 'Исторические' },
-  { id: 'природа', name: 'Природа' },
-  { id: 'городские', name: 'Городские' },
-])
-
-const activeFilter = ref<string>('all')
 const searchQuery = ref<string>('')
 
 // Обработчики событий от компонента фильтров
@@ -97,20 +67,8 @@ const handleSearchQueryUpdate = (value: string) => {
   searchQuery.value = value
 }
 
-const handleActiveFilterUpdate = (value: string) => {
-  activeFilter.value = value
-}
-
 const handleSearch = (value: string) => {
   handleSearchDebounced(value)
-}
-
-const handleFilter = (filterId: string) => {
-  setActiveFilter(filterId)
-}
-
-const handleFiltersClear = () => {
-  loadExcursions()
 }
 
 // Загрузка экскурсий с бекенда
@@ -160,35 +118,6 @@ const handleSearchExecution = async (value: string) => {
   }
 }
 
-// Фильтрация по категории
-const setActiveFilter = async (filterId: string) => {
-  activeFilter.value = filterId
-
-  if (filterId === 'all') {
-    loadExcursions()
-  } else {
-    loading.value = true
-    try {
-      const results = await api.excursions.getExcursionsByCategory(filterId)
-      excursions.value = results
-        .filter((excursion) => excursion.is_active)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    } catch (err: any) {
-      error.value = err.message || 'Ошибка фильтрации'
-      console.error('Error filtering by category:', err)
-    } finally {
-      loading.value = false
-    }
-  }
-}
-
-// Очистка фильтров
-const clearFilters = () => {
-  // Используем метод из компонента фильтров
-  filtersRef.value?.clearFilters()
-  loadExcursions()
-}
-
 // Проверка что экскурсия еще не прошла
 const isFutureExcursion = (dateString: string | Date): boolean => {
   const excursionDate = new Date(dateString)
@@ -229,8 +158,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* УДАЛЯЕМ старые стили для filters-section, они теперь в компоненте */
-
 .cards-container {
   max-width: 1200px;
   margin: 0 auto;
