@@ -27,7 +27,15 @@
             <!-- Строка 1: Фото -->
             <td class="image-cell">
               <div class="card-image-preview">
-                <img :src="card.images[0].url" :alt="card.title" @error="handleImageError" />
+                <ImageCarousel
+                  height="80px"
+                  :images="getCardImages(card)"
+                  :alt-text="card.title"
+                  :show-indicators="hasMultipleImages(card)"
+                  :show-navigation="hasMultipleImages(card)"
+                  :fit="'cover'"
+                  class="card-carousel"
+                />
               </div>
             </td>
 
@@ -177,7 +185,7 @@ import StatsComponent from '@/components/UI/StatsComponent.vue'
 import AddPeopleDialog from '@/components/Admin/AddPeopleDialog.vue'
 import BusNumberDialog from '@/components/Admin/BusNumberDialog.vue'
 import { getPeopleStatusClass, getPeopleStatusText, getProgressClass, getProgressPercentage } from '@/utils/format'
-import { handleImageError } from '@/utils/image'
+import ImageCarousel from '../UI/ImageCarousel.vue'
 
 interface Props {
   cards: Excursion[]
@@ -224,6 +232,31 @@ watchEffect(() => {
     totalSpots: cards.reduce((total, card) => total + card.people_left, 0),
   }
 })
+
+// Функция для получения изображений карточки
+const getCardImages = (card: Excursion): string[] => {
+  if (card.images && Array.isArray(card.images)) {
+    // Если images - массив строк
+    if (card.images.length > 0 && typeof card.images[0] === 'string') {
+      return card.images
+    }
+    // Если images - массив объектов с url
+    if (card.images.length > 0 && card.images[0].url) {
+      return card.images.map((img: any) => img.url)
+    }
+    // Если images - массив объектов со свойством image
+    if (card.images.length > 0 && card.images[0].image) {
+      return card.images.map((img: any) => img.image)
+    }
+  }
+  return []
+}
+
+// Проверяем, есть ли несколько изображений у карточки
+const hasMultipleImages = (card: Excursion): boolean => {
+  const images = getCardImages(card)
+  return images.length > 1
+}
 
 // Открытие диалога добавления мест
 const openAddPeopleDialog = (card: Excursion) => {

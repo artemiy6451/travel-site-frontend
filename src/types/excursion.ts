@@ -4,7 +4,6 @@ export interface Excursion {
   description: string
   date: Date
   price: number
-  duration: number
   people_amount: number
   people_left: number
   bus_number: number
@@ -17,7 +16,6 @@ export interface ExcursionCreate {
   description: string
   date: Date
   price: number
-  duration: number
   people_amount: number
   people_left: number
   bus_number: number
@@ -29,7 +27,6 @@ export interface ExcursionUpdate {
   description?: string
   date?: Date
   price?: number
-  duration?: number
   people_amount?: number
   people_left?: number
   bus_number?: number

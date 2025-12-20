@@ -134,7 +134,6 @@ const excursion = ref<ExcursionFullInfo>({
   description: '',
   date: new Date(),
   price: 0,
-  duration: 0,
   people_amount: 0,
   people_left: 0,
   is_active: true,

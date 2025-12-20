@@ -33,12 +33,6 @@
               <input v-model.number="formData.price" type="number" required min="0" placeholder="2500"
                 :disabled="loading" />
             </div>
-
-            <div class="form-group">
-              <label>Длительность (мин) *</label>
-              <input v-model.number="formData.duration" type="number" required min="0" placeholder="180"
-                :disabled="loading" />
-            </div>
           </div>
 
           <div class="form-row">
@@ -311,7 +305,6 @@ const formData = ref({
   description: '',
   date: new Date(),
   price: 0,
-  duration: 0,
   people_amount: 0,
   people_left: 0,
   is_active: true,
@@ -478,7 +471,6 @@ const handleSubmit = async () => {
     !formData.value.description ||
     !formData.value.date ||
     formData.value.price <= 0 ||
-    formData.value.duration <= 0 ||
     formData.value.people_amount <= 0
   ) {
     showUploadStatus('error', 'Заполните все обязательные поля')
@@ -497,7 +489,6 @@ const handleSubmit = async () => {
     description: formData.value.description,
     date: formData.value.date,
     price: formData.value.price,
-    duration: formData.value.duration,
     people_amount: formData.value.people_amount,
     people_left: formData.value.people_left,
     is_active: formData.value.is_active,
@@ -575,7 +566,6 @@ const resetForm = () => {
     description: '',
     date: new Date(),
     price: 0,
-    duration: 0,
     people_amount: 0,
     people_left: 0,
     is_active: true,
@@ -623,7 +613,6 @@ watch(
         description: card.description,
         date: card.date,
         price: card.price,
-        duration: card.duration,
         people_amount: card.people_amount,
         people_left: card.people_left,
         is_active: card.is_active,

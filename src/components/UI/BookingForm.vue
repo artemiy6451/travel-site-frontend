@@ -20,10 +20,6 @@
               <span class="detail-value">{{ formatDate(excursion.date) }}</span>
             </div>
             <div class="detail-item">
-              <span class="detail-label">Длительность:</span>
-              <span class="detail-value">{{ formatDuration(excursion.duration) }}</span>
-            </div>
-            <div class="detail-item">
               <span class="detail-label">Свободно мест:</span>
               <span class="detail-value">{{ excursion.people_left }}</span>
             </div>
@@ -269,16 +265,6 @@ const formatDate = (dateString: string | Date): string => {
     year: 'numeric',
     weekday: 'long',
   })
-}
-
-// Форматирование длительности
-const formatDuration = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  if (hours > 0) {
-    return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
-  }
-  return `${mins} мин`
 }
 
 // Отправка формы

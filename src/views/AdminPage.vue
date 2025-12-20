@@ -39,14 +39,6 @@
             @input="handleSearch"
           />
         </div>
-        <select v-model="selectedCategory" @change="handleCategoryFilter" class="category-filter">
-          <option value="">Все категории</option>
-          <option value="горные">Горные</option>
-          <option value="морские">Морские</option>
-          <option value="исторические">Исторические</option>
-          <option value="природа">Природа</option>
-          <option value="городские">Городские</option>
-        </select>
       </div>
     </div>
 
@@ -140,11 +132,7 @@ const loadCurrentUser = async () => {
 const loadExcursions = async () => {
   loading.value = true
   try {
-    const params: any = {}
-    if (selectedCategory.value) {
-      params.category = selectedCategory.value
-    }
-    const response = await api.excursions.getExcursions(params)
+    const response = await api.excursions.getExcursions()
 
     cards.value = response.sort((a, b) => {
       if (a.is_active !== b.is_active) {
@@ -568,8 +556,7 @@ const cancelForm = () => {
   max-width: 300px;
 }
 
-.search-input,
-.category-filter {
+.search-input {
   padding: 10px 12px;
   border: 1px solid var(--border-green-medium);
   border-radius: 8px;
@@ -579,17 +566,10 @@ const cancelForm = () => {
   width: 100%;
 }
 
-.search-input:focus,
-.category-filter:focus {
+.search-input:focus {
   outline: none;
   border-color: var(--green-primary);
   box-shadow: 0 0 0 3px var(--hover-green);
-}
-
-.category-filter {
-  min-width: 150px;
-  max-width: 300px;
-  cursor: pointer;
 }
 
 .refresh-btn {
@@ -621,12 +601,6 @@ const cancelForm = () => {
   .search-container {
     min-width: 180px;
     max-width: 250px;
-  }
-
-  .category-filter {
-    min-width: 180px;
-    max-width: 250px;
-    cursor: pointer;
   }
 }
 
@@ -668,12 +642,6 @@ const cancelForm = () => {
     min-width: auto;
   }
 
-  .category-filter {
-    min-width: auto;
-    max-width: none;
-    flex: 1;
-  }
-
   .refresh-btn {
     display: none;
   }
@@ -708,10 +676,6 @@ const cancelForm = () => {
   }
 
   .search-container {
-    width: 100%;
-  }
-
-  .category-filter {
     width: 100%;
   }
 
@@ -753,8 +717,7 @@ const cancelForm = () => {
     padding: 3px 6px;
   }
 
-  .search-input,
-  .category-filter {
+  .search-input {
     padding: 8px 10px;
     font-size: 13px;
   }
@@ -799,7 +762,6 @@ const cancelForm = () => {
 /* Улучшения для доступности */
 @media (max-width: 768px) {
   .search-input,
-  .category-filter,
   .add-btn :deep(.base-button),
   .mobile-action-btn :deep(.base-button) {
     min-height: 44px;

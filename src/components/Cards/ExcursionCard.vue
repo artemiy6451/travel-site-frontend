@@ -298,12 +298,6 @@ const isUpcomingSoon = computed((): boolean => {
   margin-bottom: 20px;
 }
 
-.card-duration {
-  font-size: 0.9rem;
-  color: var(--text-medium);
-  white-space: nowrap;
-}
-
 /* Стили для информации о местах */
 .people-info {
   display: flex;
