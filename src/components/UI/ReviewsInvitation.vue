@@ -26,10 +26,10 @@
 
             <!-- Призыв к действию -->
             <div class="cta-buttons">
-              <router-link to="/reviews" class="cta-button primary">
+              <button @click="scrollToReviews" class="cta-button primary">
                 <span class="btn-icon">📝</span>
                 <span class="btn-text">Читать все отзывы</span>
-              </router-link>
+              </button>
               <button @click="scrollToForm" class="cta-button secondary">
                 <span class="btn-icon">✍️</span>
                 <span class="btn-text">Оставить отзыв</span>
@@ -39,7 +39,7 @@
         </div>
 
         <!-- Правая часть - примеры отзывов -->
-        <div class="reviews-preview">
+        <div class="reviews-preview" @click="handleRewievClick">
           <div class="preview-container">
             <div class="preview-header">
               <h3 class="preview-title">Последние отзывы</h3>
@@ -55,12 +55,8 @@
             </div>
 
             <div v-else-if="sampleReviews.length > 0" class="preview-cards">
-              <div
-                v-for="(review, index) in sampleReviews"
-                :key="review.id"
-                class="preview-card"
-                :style="{ animationDelay: `${index * 0.1}s` }"
-              >
+              <div v-for="(review, index) in sampleReviews" :key="review.id" class="preview-card"
+                :style="{ animationDelay: `${index * 0.1}s` }">
                 <div class="review-header">
                   <div class="author-avatar">
                     {{ getInitials(review.author_name) }}
@@ -69,12 +65,7 @@
                     <div class="author-name">{{ review.author_name }}</div>
                     <div class="review-rating">
                       <span class="stars">
-                        <span
-                          v-for="star in 5"
-                          :key="star"
-                          class="star"
-                          :class="{ active: star <= review.rating }"
-                        >
+                        <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= review.rating }">
                           ★
                         </span>
                       </span>
@@ -120,6 +111,7 @@ import { useRouter } from 'vue-router'
 const stats = ref<ReviewStats | null>(null)
 const sampleReviews = ref<Review[]>([])
 const loading = ref(false)
+const router = useRouter()
 
 // Загрузка данных
 const loadData = async () => {
@@ -158,7 +150,6 @@ const formatDate = (dateString: string): string => {
 }
 
 const scrollToForm = () => {
-  const router = useRouter()
   router.push('/reviews')
   setTimeout(() => {
     const formElement = document.querySelector('.review-form')
@@ -166,6 +157,20 @@ const scrollToForm = () => {
       formElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, 300)
+}
+
+const scrollToReviews = () => {
+  router.push('/reviews')
+  setTimeout(() => {
+    const formElement = document.querySelector('.reviews-section')
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, 300)
+}
+
+const handleRewievClick = (): void => {
+  router.push(`/reviews`)
 }
 
 onMounted(() => {
@@ -496,6 +501,7 @@ onMounted(() => {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

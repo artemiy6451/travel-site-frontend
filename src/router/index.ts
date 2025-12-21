@@ -58,8 +58,14 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior() {
-    return { top: 0, behavior: 'smooth' }
+  scrollBehavior(_, __, savedPosition) {
+    // Если есть сохраненная позиция (при переходе назад/вперед)
+    if (savedPosition) {
+      return savedPosition;
+    }
+
+    // По умолчанию - наверх
+    return { top: 0, behavior: 'smooth' };
   },
 })
 

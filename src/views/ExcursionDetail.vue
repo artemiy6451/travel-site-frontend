@@ -345,7 +345,6 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 30px 20px 20px; /* Отступы сверху/снизу */
-  z-index: 10;
   position: relative;
   background: white; /* Белый фон для заголовка */
 }
