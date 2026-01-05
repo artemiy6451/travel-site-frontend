@@ -10,21 +10,11 @@
           Профессиональные экскурсии по самым красивым и удивительным уголкам Крыма
         </p>
         <div class="social_links">
-          <a
-            href="https://vk.com/vvvectaa"
-            target="_blank"
-            class="social_link"
-            aria-label="Наша группа ВКонтакте"
-          >
+          <a href="https://vk.com/vvvectaa" target="_blank" class="social_link" aria-label="Наша группа ВКонтакте">
             <span class="social_icon">📱</span>
             ВКонтакте
           </a>
-          <a
-            href="https://t.me/vvvecta"
-            target="_blank"
-            class="social_link"
-            aria-label="Наш канал в Телеграме"
-          >
+          <a href="https://t.me/vvvecta" target="_blank" class="social_link" aria-label="Наш канал в Телеграме">
             <span class="social_icon">📱</span>
             Телеграм
           </a>
@@ -77,13 +67,16 @@
 </template>
 
 <script setup lang="ts">
-import { api } from '@/utils/api'
 import { onMounted, ref } from 'vue'
 const isAdmin = ref<boolean>(false)
 
 const currentYear = ref(new Date().getFullYear())
 
-onMounted(async () => (isAdmin.value = await api.auth.checkAdminAccess()))
+onMounted(async () => {
+  if (localStorage.getItem('access_token') !== null) {
+    isAdmin.value = true
+  }
+})
 </script>
 
 <style scoped>

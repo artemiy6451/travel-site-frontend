@@ -2,7 +2,7 @@ import { isAuthenticated, isSuperuser } from '@/utils/auth'
 
 export const adminGuard = () => {
   if (!isAuthenticated()) {
-    return '/login'
+    return '/'
   }
 
   if (!isSuperuser()) {

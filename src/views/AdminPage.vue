@@ -95,7 +95,6 @@ const checkScreenSize = () => {
 // Данные
 const cards = ref<Excursion[]>([])
 const searchQuery = ref('')
-const selectedCategory = ref('')
 
 // Форма
 const showAddForm = ref(false)
