@@ -29,7 +29,24 @@
         <span class="btn-text">Добавить экскурсию</span>
       </BaseButton>
 
+
       <div class="filters">
+        <!-- Добавляем переключатель -->
+        <div class="excursion-type-toggle">
+          <button
+            :class="['type-toggle-btn', { active: excursionType === 'active' }]"
+            @click="setExcursionType('active')"
+          >
+            Активные
+          </button>
+          <button
+            :class="['type-toggle-btn', { active: excursionType === 'inactive' }]"
+            @click="setExcursionType('inactive')"
+          >
+            Неактивные
+          </button>
+        </div>
+
         <div class="search-container">
           <input
             v-model="searchQuery"
@@ -63,6 +80,56 @@
       @add-people="addPeopleToExcursion"
       @change-bus-number="changeBusNumber"
     />
+
+    <!-- Пагинация -->
+    <div v-if="totalPages > 1" class="pagination">
+      <button
+        @click="goToPage(currentPage - 1)"
+        :disabled="currentPage === 1 || loading"
+        class="pagination-btn prev"
+      >
+        ←
+      </button>
+
+      <div class="page-numbers">
+        <button
+          v-for="page in getVisiblePages()"
+          :key="page"
+          @click="goToPage(page)"
+          :class="['page-btn', { active: page === currentPage }]"
+          :disabled="page === '...' || loading"
+        >
+          {{ page }}
+        </button>
+      </div>
+
+      <button
+        @click="goToPage(currentPage + 1)"
+        :disabled="currentPage === totalPages || loading"
+        class="pagination-btn next"
+      >
+        →
+      </button>
+
+      <div class="page-info">
+        Страница {{ currentPage }} из {{ totalPages }}
+      </div>
+
+      <div class="page-size-selector">
+        <label>Показать:</label>
+        <select
+          v-model="pageSize"
+          @change="onPageSizeChange"
+          :disabled="loading"
+          class="size-select"
+        >
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -95,6 +162,13 @@ const checkScreenSize = () => {
 // Данные
 const cards = ref<Excursion[]>([])
 const searchQuery = ref('')
+const excursionType = ref<'active' | 'inactive'>('active')
+
+// Пагинация
+const currentPage = ref(1)
+const pageSize = ref(10) // Количество элементов на странице
+const totalItems = ref(0) // Общее количество элементов
+const totalPages = ref(0) // Общее количество страниц
 
 // Форма
 const showAddForm = ref(false)
@@ -127,11 +201,31 @@ const loadCurrentUser = async () => {
   }
 }
 
-// Загрузка экскурсий
-const loadExcursions = async () => {
+// Загрузка экскурсий с пагинацией
+const loadExcursions = async (page: number = currentPage.value) => {
   loading.value = true
   try {
-    const response = await api.excursions.getExcursions()
+    const skip = (page - 1) * pageSize.value
+    const limit = pageSize.value
+
+    let response: Excursion[]
+
+    // Выбираем нужный метод в зависимости от типа
+    if (excursionType.value === 'active') {
+      response = await api.excursions.getActiveExcursions({
+        skip,
+        limit
+      })
+    } else {
+      response = await api.excursions.getNotActiveExcursions({
+        skip,
+        limit
+      })
+    }
+
+    // TODO: Ваш API должен возвращать общее количество
+    // Пока что будем считать, что если пришло меньше limit, значит это последняя страница
+    // В реальности API должен возвращать { items: Excursion[], total: number }
 
     cards.value = response.sort((a, b) => {
       if (a.is_active !== b.is_active) {
@@ -141,11 +235,32 @@ const loadExcursions = async () => {
       const dateB = new Date(b.date).getTime()
       return dateA - dateB
     })
+
+    // Временная логика для подсчета общего количества
+    // В реальности это должно приходить от API
+    if (response.length < pageSize.value && page === currentPage.value) {
+      totalItems.value = skip + response.length
+    } else if (page === 1 && response.length === pageSize.value) {
+      // Предположим, что есть еще элементы
+      totalItems.value = pageSize.value * 2 // Примерное значение
+    }
+
+    totalPages.value = Math.ceil(totalItems.value / pageSize.value)
+    currentPage.value = page
+
   } catch (error) {
     showNotification('Ошибка загрузки экскурсий', 'error')
     console.error('Error loading excursions:', error)
   } finally {
     loading.value = false
+  }
+}
+
+// Метод для изменения типа экскурсий
+const setExcursionType = async (type: 'active' | 'inactive') => {
+  if (excursionType.value !== type) {
+    excursionType.value = type
+    await loadExcursions()
   }
 }
 
@@ -162,11 +277,64 @@ const loadExcursionDetails = async (excursionId: number): Promise<ExcursionDetai
   }
 }
 
+// Методы пагинации
+const goToPage = (page: number | string) => {
+  if (typeof page === 'string' || page < 1 || page > totalPages.value) {
+    return
+  }
+  loadExcursions(page as number)
+}
+
+const onPageSizeChange = () => {
+  currentPage.value = 1 // Сбрасываем на первую страницу при изменении размера
+  loadExcursions()
+}
+
+// Метод для отображения номеров страниц с многоточием
+const getVisiblePages = () => {
+  const pages: (number | string)[] = []
+  const maxVisible = isMobile.value ? 3 : 5
+
+  if (totalPages.value <= maxVisible) {
+    // Показать все страницы
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Показать первую страницу, последнюю и текущую с соседями
+    pages.push(1)
+
+    if (currentPage.value > 3) {
+      pages.push('...')
+    }
+
+    // Добавляем страницы вокруг текущей
+    const start = Math.max(2, currentPage.value - 1)
+    const end = Math.min(totalPages.value - 1, currentPage.value + 1)
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+
+    if (currentPage.value < totalPages.value - 2) {
+      pages.push('...')
+    }
+
+    pages.push(totalPages.value)
+  }
+
+  return pages
+}
+
 // Поиск
 const handleSearch = async () => {
   if (searchQuery.value.trim()) {
     try {
+      // При поиске сбрасываем пагинацию на первую страницу
+      currentPage.value = 1
+
       const response = await api.excursions.searchExcursions(searchQuery.value)
+
       cards.value = response.sort((a, b) => {
         if (a.is_active !== b.is_active) {
           return a.is_active ? -1 : 1
@@ -175,17 +343,17 @@ const handleSearch = async () => {
         const dateB = new Date(b.date).getTime()
         return dateA - dateB
       })
+
+      // TODO: Обновить totalItems на основе ответа от API
+
     } catch {
       showNotification('Ошибка поиска', 'error')
     }
   } else {
+    // При очистке поиска загружаем обычные экскурсии
+    currentPage.value = 1
     loadExcursions()
   }
-}
-
-// Фильтр по категории
-const handleCategoryFilter = () => {
-  loadExcursions()
 }
 
 // Показ уведомления
@@ -577,6 +745,230 @@ const cancelForm = () => {
 
 .btn-text {
   display: inline;
+}
+
+/* Стили для переключателя типа экскурсий */
+.excursion-type-toggle {
+  display: flex;
+  background: var(--border-green-medium);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+  margin-right: 10px;
+}
+
+.type-toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.type-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.type-toggle-btn.active {
+  background: var(--green-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили пагинации */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 30px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-green-medium);
+  background: var(--white);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--hover-green);
+  border-color: var(--green-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.page-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border-green-medium);
+  background: var(--white);
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+  background: var(--hover-green);
+  border-color: var(--green-primary);
+}
+
+.page-btn.active {
+  background: var(--green-primary);
+  color: white;
+  border-color: var(--green-primary);
+}
+
+.page-btn:disabled {
+  cursor: default;
+  background: transparent;
+  border: none;
+}
+
+.page-info {
+  margin: 0 15px;
+  color: var(--text-light);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 15px;
+}
+
+.page-size-selector label {
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.size-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-green-medium);
+  border-radius: 6px;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.size-select:focus {
+  outline: none;
+  border-color: var(--green-primary);
+}
+
+/* Адаптивность пагинации */
+@media (max-width: 768px) {
+  .pagination {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .page-numbers {
+    order: 1;
+  }
+
+  .page-info {
+    order: 2;
+  }
+
+  .page-size-selector {
+    order: 3;
+    margin-left: 0;
+  }
+
+  .pagination-btn {
+    order: 0;
+  }
+
+  .page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-numbers {
+    gap: 3px;
+  }
+
+  .page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  .page-info {
+    font-size: 13px;
+  }
+
+  .page-size-selector {
+    font-size: 13px;
+  }
+
+  .size-select {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .excursion-type-toggle {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .type-toggle-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .type-toggle-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
 }
 
 /* Адаптивность для планшетов (768px - 1024px) */
