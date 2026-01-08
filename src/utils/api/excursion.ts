@@ -23,12 +23,12 @@ export class ExcursionsApi extends BaseApi {
     }
   }
 
-  async getExcursions(params?: {
+  async getActiveExcursions(params?: {
     category?: string
     skip?: number
     limit?: number
   }): Promise<Excursion[]> {
-    const cacheKey = this.buildCacheKey('excursions', params)
+    const cacheKey = this.buildCacheKey('activeExcursions', params)
     const cached = cache.get(cacheKey)
     if (cached) return cached
 
@@ -38,7 +38,29 @@ export class ExcursionsApi extends BaseApi {
     if (params?.limit) queryParams.append('limit', params.limit.toString())
 
     const queryString = queryParams.toString()
-    const endpoint = queryString ? `/excursions?${queryString}` : '/excursions'
+    const endpoint = queryString ? `/excursions/active?${queryString}` : '/excursions/active'
+
+    const response = await this.request<Excursion[]>(endpoint)
+    cache.set(cacheKey, response, 2 * 60 * 1000)
+    return response
+  }
+
+  async getNotActiveExcursions(params?: {
+    category?: string
+    skip?: number
+    limit?: number
+  }): Promise<Excursion[]> {
+    const cacheKey = this.buildCacheKey('notActiveExcursions', params)
+    const cached = cache.get(cacheKey)
+    if (cached) return cached
+
+    const queryParams = new URLSearchParams()
+    if (params?.category) queryParams.append('category', params.category)
+    if (params?.skip) queryParams.append('skip', params.skip.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+
+    const queryString = queryParams.toString()
+    const endpoint = queryString ? `/excursions/not_active?${queryString}` : '/excursions/not_active'
 
     const response = await this.request<Excursion[]>(endpoint)
     cache.set(cacheKey, response, 2 * 60 * 1000)
