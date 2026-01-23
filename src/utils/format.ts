@@ -46,3 +46,8 @@ export const getProgressClass = (card: Excursion) => {
   if (percentage >= 70) return 'warning'
   return 'success'
 }
+
+// Получения числа забронированных пользователей
+export const getBookingCountPeople = (card: Excursion) => {
+  return card.people_amount - card.people_left
+}

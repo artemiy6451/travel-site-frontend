@@ -69,7 +69,7 @@
                   ></div>
                 </div>
                 <div class="people-numbers">
-                  <span class="people-left">{{ card.people_left }}</span>
+                  <span class="people-left">{{ getBookingCountPeople(card) }}</span>
                   <span class="people-separator">/</span>
                   <span class="people-total">{{ card.people_amount }}</span>
                 </div>
@@ -309,7 +309,7 @@ import ExcursionDeparture from '@/components/Excursion/ExcursionDeparture.vue'
 import StatsComponent from '@/components/UI/StatsComponent.vue'
 import AddPeopleDialog from '@/components/Admin/AddPeopleDialog.vue'
 import BusNumberDialog from '@/components/Admin/BusNumberDialog.vue'
-import { getPeopleStatusClass, getPeopleStatusText, getProgressClass, getProgressPercentage } from '@/utils/format'
+import { getBookingCountPeople, getPeopleStatusClass, getPeopleStatusText, getProgressClass, getProgressPercentage } from '@/utils/format'
 import ImageCarousel from '../UI/ImageCarousel.vue'
 
 interface Props {
