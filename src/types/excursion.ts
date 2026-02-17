@@ -8,6 +8,7 @@ export interface Excursion {
   people_left: number
   bus_number: number
   is_active: boolean
+  cities: string[]
   images: ExcursionImage[]
 }
 
@@ -20,6 +21,7 @@ export interface ExcursionCreate {
   people_left: number
   bus_number: number
   is_active: boolean
+  cities: string[]
 }
 
 export interface ExcursionUpdate {

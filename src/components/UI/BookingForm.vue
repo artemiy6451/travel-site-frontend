@@ -8,129 +8,208 @@
       </div>
 
       <div class="modal-body">
-        <!-- Информация об экскурсии -->
-        <div v-if="excursion" class="excursion-info">
-          <div class="excursion-header">
-            <h3 class="excursion-title">{{ excursion.title }}</h3>
-            <div class="excursion-price">{{ formatPrice(excursion.price) }}</div>
+        <div v-if="!bookingSuccess" class="booking-step">
+          <!-- Информация об экскурсии -->
+          <div v-if="excursion" class="excursion-info">
+            <div class="excursion-header">
+              <h3 class="excursion-title">{{ excursion.title }}</h3>
+              <div class="excursion-price">{{ formatPrice(excursion.price) }}</div>
+            </div>
+            <div class="excursion-details">
+              <div class="detail-item">
+                <span class="detail-label">Дата:</span>
+                <span class="detail-value">{{ formatDate(excursion.date) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Свободно мест:</span>
+                <span class="detail-value">{{ excursion.people_left }}</span>
+              </div>
+            </div>
           </div>
-          <div class="excursion-details">
-            <div class="detail-item">
-              <span class="detail-label">Дата:</span>
-              <span class="detail-value">{{ formatDate(excursion.date) }}</span>
+
+          <!-- Форма бронирования -->
+          <form @submit.prevent="submitBooking(formData)" class="booking-form">
+            <div class="form-section">
+              <h3 class="section-title">Контактные данные</h3>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="lastName" class="form-label">Фамилия *</label>
+                  <input id="lastName" v-model="formData.last_name" type="text" class="form-input" required
+                    placeholder="Введите вашу фамилию" />
+                </div>
+
+                <div class="form-group">
+                  <label for="firstName" class="form-label">Имя *</label>
+                  <input id="firstName" v-model="formData.first_name" type="text" class="form-input" required
+                    placeholder="Введите ваше имя" />
+                </div>
+              </div>
+
+              <!-- НОВЫЙ БЛОК: Выбор города -->
+              <div class="form-group">
+                <label for="city" class="form-label">Город *</label>
+
+                <!-- Варианты предустановленных городов -->
+                <div class="city-options">
+                  <button
+                    v-for="city in excursion?.cities"
+                    :key="city"
+                    type="button"
+                    class="city-option-btn"
+                    :class="{ active: formData.city === city && !isCustomCity }"
+                    @click="selectCity(city)"
+                  >
+                    {{ city }}
+                  </button>
+                  <button
+                    type="button"
+                    class="city-option-btn custom"
+                    :class="{ active: isCustomCity }"
+                    @click="enableCustomCity"
+                  >
+                    ✏️ Другой
+                  </button>
+                </div>
+
+                <!-- Поле для своего варианта города -->
+                <div v-if="isCustomCity" class="custom-city-input">
+                  <input
+                    id="customCity"
+                    v-model="formData.city"
+                    type="text"
+                    class="form-input"
+                    required
+                    placeholder="Введите название вашего города"
+                    @input="validateCustomCity"
+                  />
+                  <button
+                    type="button"
+                    class="clear-custom-btn"
+                    @click="clearCustomCity"
+                    title="Очистить"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <!-- Подсказка для поля город -->
+                <div class="input-hint">Выберите ваш город из списка или укажите свой вариант</div>
+              </div>
+
+              <div class="form-group">
+                <label for="phone" class="form-label">Номер телефона *</label>
+                <input id="phone" v-model="formData.phone_number" type="tel" class="form-input" required
+                  placeholder="+7 (XXX) XXX-XX-XX" @input="formatPhone" />
+                <div class="input-hint">Формат: +7 XXX XXX-XX-XX</div>
+              </div>
             </div>
-            <div class="detail-item">
-              <span class="detail-label">Свободно мест:</span>
-              <span class="detail-value">{{ excursion.people_left }}</span>
+
+            <div class="form-section">
+              <h3 class="section-title">Участники</h3>
+
+              <div class="people-selector">
+                <div class="people-group">
+                  <label class="people-label">Всего человек *</label>
+                  <div class="people-counter">
+                    <button type="button" class="counter-btn minus" @click="decrementTotal"
+                      :disabled="formData.total_people <= 1">
+                      −
+                    </button>
+                    <span class="people-count">{{ formData.total_people }}</span>
+                    <button type="button" class="counter-btn plus" @click="incrementTotal"
+                      :disabled="formData.total_people >= maxPeople">
+                      +
+                    </button>
+                  </div>
+                  <div class="people-hint">Максимум: {{ maxPeople }} человек</div>
+                </div>
+              </div>
+
+              <!-- Итоговая стоимость -->
+              <div class="price-summary">
+                <div class="price-row">
+                  <span>Взрослые ({{ adultsCount }} × {{ formatPrice(excursion?.price || 0) }})</span>
+                </div>
+                <div class="price-total">
+                  <span>Итого:</span>
+                  <span class="total-amount">{{ formatPrice(totalPrice) }}</span>
+                </div>
+              </div>
             </div>
+
+            <!-- Кнопки -->
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" @click="closeModal" :disabled="loading">
+                Отмена
+              </button>
+              <button type="submit" class="btn-primary" :disabled="loading || !isFormValid">
+                <span v-if="loading">Отправка...</span>
+                <span v-else>Забронировать</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div v-else class="success-step">
+          <div class="success-header">
+            <div class="success-icon">✅</div>
+            <h2 class="success-title">Бронирование создано!</h2>
+            <p class="success-subtitle">ID вашей брони: <strong>#{{ bookingId }}</strong></p>
+          </div>
+
+          <div class="telegram-confirmation">
+            <h3 class="confirmation-title">Подтвердите бронирование в Telegram</h3>
+
+            <div class="confirmation-steps">
+              <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <p class="step-title">Откройте Telegram</p>
+                  <p class="step-description">Нажмите кнопку ниже</p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <p class="step-title">Подтвердите бронирование</p>
+                  <p class="step-description">Бот автоматически подтвердит ваше бронирование</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="telegram-actions">
+              <!-- Кнопка перехода в бота -->
+              <a :href="telegramBotUrl" target="_blank" class="telegram-button">
+                <span class="telegram-icon">📱</span>
+                <span class="telegram-text">Перейти в Telegram-бота</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="success-actions">
+            <button class="btn-secondary" @click="closeModal">
+              Закрыть
+            </button>
+            <button class="btn-primary" @click="copyBookingLink">
+              {{ copyButtonText }}
+            </button>
           </div>
         </div>
 
-        <!-- Форма бронирования -->
-        <form @submit.prevent="submitBooking(formData)" class="booking-form">
-          <div class="form-section">
-            <h3 class="section-title">Контактные данные</h3>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="firstName" class="form-label">Имя *</label>
-                <input
-                  id="firstName"
-                  v-model="formData.first_name"
-                  type="text"
-                  class="form-input"
-                  required
-                  placeholder="Введите ваше имя"
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="lastName" class="form-label">Фамилия *</label>
-                <input
-                  id="lastName"
-                  v-model="formData.last_name"
-                  type="text"
-                  class="form-input"
-                  required
-                  placeholder="Введите вашу фамилию"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="phone" class="form-label">Номер телефона *</label>
-              <input
-                id="phone"
-                v-model="formData.phone_number"
-                type="tel"
-                class="form-input"
-                required
-                placeholder="+7 (XXX) XXX-XX-XX"
-                @input="formatPhone"
-              />
-              <div class="input-hint">Формат: +7 XXX XXX-XX-XX</div>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h3 class="section-title">Участники</h3>
-
-            <div class="people-selector">
-              <div class="people-group">
-                <label class="people-label">Всего человек *</label>
-                <div class="people-counter">
-                  <button
-                    type="button"
-                    class="counter-btn minus"
-                    @click="decrementTotal"
-                    :disabled="formData.total_people <= 1"
-                  >
-                    −
-                  </button>
-                  <span class="people-count">{{ formData.total_people }}</span>
-                  <button
-                    type="button"
-                    class="counter-btn plus"
-                    @click="incrementTotal"
-                    :disabled="formData.total_people >= maxPeople"
-                  >
-                    +
-                  </button>
-                </div>
-                <div class="people-hint">Максимум: {{ maxPeople }} человек</div>
-              </div>
-            </div>
-
-            <!-- Итоговая стоимость -->
-            <div class="price-summary">
-              <div class="price-row">
-                <span>Взрослые ({{ adultsCount }} × {{ formatPrice(excursion?.price || 0) }})</span>
-              </div>
-              <div class="price-total">
-                <span>Итого:</span>
-                <span class="total-amount">{{ formatPrice(totalPrice) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Кнопки -->
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" @click="closeModal" :disabled="loading">
-              Отмена
-            </button>
-            <button type="submit" class="btn-primary" :disabled="loading || !isFormValid">
-              <span v-if="loading">Отправка...</span>
-              <span v-else>Забронировать</span>
-            </button>
-          </div>
-        </form>
+        <!-- Ошибка -->
+        <div v-if="error" class="error-message">
+          <div class="error-icon">⚠️</div>
+          <p class="error-text">{{ error }}</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import type { BookingCreate } from '@/types/booking'
 import type { Excursion } from '@/types/excursion'
 import { api } from '@/utils/api'
@@ -149,8 +228,18 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// Конфигурация Telegram бота
+const telegramBotUsername = 'lokach_dev_bot'
+const telegramBotBaseUrl = `https://t.me/${telegramBotUsername}`
+
+// Состояние для кастомного города
+const isCustomCity = ref(false)
+
 const loading = ref(false)
 const error = ref('')
+const bookingSuccess = ref(false)
+const bookingId = ref<number | null>(null)
+const copyButtonText = ref('Скопировать ссылку')
 
 // Данные формы
 const formData = ref<BookingCreate>({
@@ -159,6 +248,8 @@ const formData = ref<BookingCreate>({
   last_name: '',
   phone_number: '',
   total_people: 1,
+  children: 0,
+  city: '', // Добавляем поле city
 })
 
 // Следим за изменением экскурсии
@@ -172,6 +263,12 @@ watch(
   { immediate: true },
 )
 
+// Генерация ссылки для Telegram бота
+const telegramBotUrl = computed(() => {
+  if (!bookingId.value) return telegramBotBaseUrl
+  return `${telegramBotBaseUrl}?start=confirm_${bookingId.value}`
+})
+
 // Максимальное количество людей
 const maxPeople = computed(() => {
   return props.excursion?.people_left || 10
@@ -182,6 +279,7 @@ const isFormValid = computed(() => {
   return (
     formData.value.first_name.trim() &&
     formData.value.last_name.trim() &&
+    formData.value.city?.trim() &&
     formData.value.phone_number.replace(/\D/g, '').length >= 11 &&
     formData.value.total_people > 0 &&
     formData.value.total_people <= maxPeople.value
@@ -201,6 +299,32 @@ const totalPrice = computed(() => {
   return adultsPrice.value
 })
 
+// Методы для работы с городом
+const selectCity = (city: string) => {
+  formData.value.city = city
+  isCustomCity.value = false
+}
+
+const enableCustomCity = () => {
+  isCustomCity.value = true
+  formData.value.city = ''
+}
+
+const clearCustomCity = () => {
+  formData.value.city = ''
+}
+
+const validateCustomCity = () => {
+  // Можно добавить валидацию при необходимости
+  // Например, минимальная длина
+  if (formData.value.city && formData.value.city.length < 2) {
+    // Показываем предупреждение, но не блокируем ввод
+    error.value = 'Название города должно содержать минимум 2 символа'
+  } else {
+    error.value = ''
+  }
+}
+
 // Методы
 const incrementTotal = () => {
   if (formData.value.total_people < maxPeople.value) {
@@ -211,10 +335,6 @@ const incrementTotal = () => {
 const decrementTotal = () => {
   if (formData.value.total_people > 1) {
     formData.value.total_people--
-    // Если детей больше чем общее количество, уменьшаем детей
-    if ((formData.value.children || 0) >= formData.value.total_people) {
-      formData.value.children = formData.value.total_people - 1
-    }
   }
 }
 
@@ -267,6 +387,20 @@ const formatDate = (dateString: string | Date): string => {
   })
 }
 
+// Копирование ссылки
+const copyBookingLink = async () => {
+  try {
+    await navigator.clipboard.writeText(telegramBotUrl.value)
+    copyButtonText.value = 'Скопировано!'
+    setTimeout(() => {
+      copyButtonText.value = 'Скопировать ссылку'
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy:', err)
+    copyButtonText.value = 'Ошибка копирования'
+  }
+}
+
 // Отправка формы
 const submitBooking = async (new_booking: BookingCreate) => {
   if (!isFormValid.value) return
@@ -275,19 +409,38 @@ const submitBooking = async (new_booking: BookingCreate) => {
   error.value = ''
 
   try {
-    await api.booking.createBooking(new_booking)
+    // Отправляем запрос на создание бронирования
+    const response = await api.booking.createBooking(new_booking)
 
-    const booking = true
-    emit('success', booking)
-    closeModal()
+    // Предполагаем, что API возвращает объект с id
+    bookingId.value = response.id || response.data?.id
 
-    // Сбрасываем форму
-    resetForm()
+    // Переключаемся на экран успеха
+    bookingSuccess.value = true
+
+    // Ждем обновления DOM и скроллим наверх
+    await nextTick()
+    scrollToTop()
+
+    // Уведомляем родительский компонент
+    emit('success', response)
+
   } catch (err: any) {
     error.value = err.message || 'Произошла ошибка при отправке заявки'
     console.error('Booking error:', err)
   } finally {
     loading.value = false
+  }
+}
+
+// Функция скролла наверх
+const scrollToTop = () => {
+  const modalBody = document.querySelector('.booking-modal')
+  if (modalBody) {
+    modalBody.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
   }
 }
 
@@ -300,7 +453,13 @@ const resetForm = () => {
     phone_number: '',
     total_people: 1,
     children: 0,
+    city: '',
   }
+  isCustomCity.value = false
+  bookingSuccess.value = false
+  bookingId.value = null
+  copyButtonText.value = 'Скопировать ссылку'
+  error.value = ''
 }
 
 // Закрытие модального окна
@@ -312,6 +471,118 @@ const closeModal = () => {
 </script>
 
 <style scoped>
+/* Добавляем новые стили для выбора города */
+.city-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.city-option-btn {
+  padding: 10px 16px;
+  background: var(--white);
+  border: 2px solid var(--border-green-light);
+  border-radius: 30px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.city-option-btn:hover:not(.custom) {
+  background: var(--green-bg-light);
+  border-color: var(--green-primary);
+  transform: translateY(-2px);
+}
+
+.city-option-btn.active {
+  background: var(--green-primary);
+  border-color: var(--green-primary);
+  color: var(--white);
+  box-shadow: 0 4px 12px var(--shadow-green-light);
+}
+
+.city-option-btn.custom {
+  border-style: dashed;
+  background: var(--green-bg-light);
+}
+
+.city-option-btn.custom.active {
+  background: var(--green-primary);
+  border-style: solid;
+}
+
+.custom-city-input {
+  position: relative;
+  margin-top: 10px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-city-input .form-input {
+  padding-right: 40px;
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--shadow-green-light);
+}
+
+.clear-custom-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-light);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-custom-btn:hover {
+  background: var(--green-bg-light);
+  color: var(--text-dark);
+}
+
+/* Адаптивность для выбора города */
+@media (max-width: 768px) {
+  .city-options {
+    gap: 8px;
+  }
+
+  .city-option-btn {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .city-options {
+    flex-direction: column;
+  }
+
+  .city-option-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
 .booking-modal-overlay {
   position: fixed;
   top: 0;
@@ -673,6 +944,269 @@ const closeModal = () => {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Стили для шага успешного бронирования */
+.success-step {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-green);
+}
+
+.success-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.success-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.success-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-medium);
+}
+
+/* Telegram подтверждение */
+.telegram-confirmation {
+  background: var(--green-bg-light);
+  border-radius: 16px;
+  padding: 25px;
+  margin-bottom: 25px;
+  border: 1px solid var(--border-green);
+}
+
+.confirmation-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.confirmation-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 15px;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid var(--border-green);
+}
+
+.step-number {
+  background: var(--green-primary);
+  color: var(--white);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-title {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 5px;
+}
+
+.step-description {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  line-height: 1.4;
+}
+
+/* Telegram действия */
+.telegram-actions {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .telegram-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.telegram-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.telegram-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+  background: linear-gradient(135deg, #0099e6 0%, #0077b3 100%);
+}
+
+.telegram-icon {
+  font-size: 1.3rem;
+}
+
+.telegram-text {
+  flex: 1;
+  text-align: center;
+}
+
+.qr-code-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid var(--border-green);
+}
+
+.qr-code-container {
+  width: 200px;
+  height: 200px;
+  padding: 15px;
+  background: var(--white);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 15px;
+}
+
+.qr-code {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qr-code-hint {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  text-align: center;
+  max-width: 180px;
+}
+
+/* Примечание */
+.confirmation-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 15px;
+  background: #fff9e6;
+  border-radius: 12px;
+  border: 1px solid #ffeeba;
+}
+
+.note-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.note-content {
+  flex: 1;
+}
+
+.note-content p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.note-content a {
+  color: var(--green-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.note-content a:hover {
+  text-decoration: underline;
+}
+
+/* Кнопки после успеха */
+.success-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+/* Сообщение об ошибке */
+.error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 15px;
+  background: #fff2f2;
+  border-radius: 12px;
+  border: 1px solid #ffcccc;
+  margin-top: 20px;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  color: #d32f2f;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
 }
 
 /* Адаптивность */

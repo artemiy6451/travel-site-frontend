@@ -3,6 +3,39 @@
     <div class="form-container">
       <h2>{{ editingCard ? 'Редактировать' : 'Добавить' }} экскурсию</h2>
 
+      <!-- Блок для создания копии с другой датой (только в режиме редактирования) -->
+      <div v-if="editingCard" class="duplicate-section">
+        <h3 class="section-title">Создать копию с другой датой</h3>
+        <div class="duplicate-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Дополнительная дата отправления</label>
+              <input
+                v-model="duplicateDate"
+                type="datetime-local"
+                :disabled="duplicateLoading"
+                class="duplicate-date-input"
+              />
+            </div>
+            <div class="form-group duplicate-actions">
+              <BaseButton
+                type="button"
+                variant="secondary"
+                :loading="duplicateLoading"
+                :disabled="!duplicateDate || duplicateLoading"
+                @click="handleDuplicate"
+                class="duplicate-btn"
+              >
+                {{ duplicateLoading ? 'Создание...' : 'Добавить копию' }}
+              </BaseButton>
+            </div>
+          </div>
+          <small class="duplicate-hint">
+            Будет создана новая экскурсия со всеми текущими данными, но с указанной датой отправления
+          </small>
+        </div>
+      </div>
+
       <form @submit.prevent="handleSubmit" class="card-form">
         <!-- Основная информация -->
         <div class="form-section">
@@ -13,6 +46,78 @@
               <label>Название *</label>
               <input v-model="formData.title" type="text" required placeholder="Название экскурсии"
                 :disabled="loading" />
+            </div>
+          </div>
+
+          <!-- НОВЫЙ БЛОК: Города отправления -->
+          <div class="form-group">
+            <label>Города отправления *</label>
+            <div class="cities-section">
+              <!-- Список выбранных городов -->
+              <div v-if="formData.cities.length > 0" class="selected-cities">
+                <div v-for="(city, index) in formData.cities" :key="index" class="city-tag">
+                  <span class="city-name">{{ city }}</span>
+                  <button
+                    type="button"
+                    class="remove-city-btn"
+                    @click="removeCity(index)"
+                    :disabled="loading"
+                    title="Удалить город"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <!-- Добавление нового города -->
+              <div class="add-city-section">
+                <!-- Предустановленные города -->
+                <div class="preset-cities">
+                  <span class="preset-label">Популярные:</span>
+                  <div class="preset-buttons">
+                    <button
+                      v-for="city in cityPresets"
+                      :key="city"
+                      type="button"
+                      class="preset-city-btn"
+                      :class="{ disabled: isCitySelected(city) }"
+                      @click="addPresetCity(city)"
+                      :disabled="loading || isCitySelected(city)"
+                    >
+                      {{ city }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Добавление своего города -->
+                <div class="custom-city-add">
+                  <div class="custom-city-input-group">
+                    <input
+                      v-model="newCity"
+                      type="text"
+                      placeholder="Введите свой город"
+                      class="custom-city-input"
+                      :disabled="loading"
+                      @keyup.enter="addCustomCity"
+                    />
+                    <button
+                      type="button"
+                      class="add-city-btn"
+                      @click="addCustomCity"
+                      :disabled="loading || !newCity.trim()"
+                    >
+                      Добавить
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Подсказки -->
+              <div class="cities-hints">
+                <small>• Выберите город из списка или добавьте свой</small>
+                <small>• Можно добавить несколько городов отправления</small>
+                <small>• Первый город будет основным</small>
+              </div>
             </div>
           </div>
 
@@ -263,6 +368,7 @@ interface Props {
 
 interface Emits {
   (e: 'submit', data: {
+    new: boolean
     excursion: ExcursionCreate
     details: any
     imagesToAdd: File[]
@@ -271,6 +377,12 @@ interface Emits {
   }): void
   (e: 'cancel'): void
   (e: 'update:visible', value: boolean): void
+  (e: 'duplicate', data: {
+    excursion: ExcursionCreate
+    details: any
+    imagesToAdd: File[]
+    date: string
+  }): void // Новый emit для дублирования
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -293,6 +405,19 @@ const uploadStatus = ref<{ type: 'success' | 'error' | 'info'; message: string }
 const imagesToDelete = ref<number[]>([]) // ID изображений для удаления
 const imagesToAdd = ref<File[]>([]) // Новые файлы для загрузки
 
+// Данные для дублирования
+const duplicateDate = ref<Date>()
+const duplicateLoading = ref(false)
+
+// Данные для городов
+const cityPresets = ref<string[]>([
+  'Симферополь',
+  'Бахчисарай',
+  'Севастополь',
+])
+const newCity = ref('')
+
+
 // Вычисляемое свойство для текста загрузки
 const getLoadingText = computed(() => {
   if (props.loading) return 'Сохранение...'
@@ -309,6 +434,7 @@ const formData = ref({
   people_left: 0,
   is_active: true,
   bus_number: 0,
+  cities: [] as string[],
 
   details: {
     description: '',
@@ -325,6 +451,35 @@ const formData = ref({
     recommendations: [''],
   },
 })
+
+// Методы для работы с городами
+const isCitySelected = (city: string): boolean => {
+  return formData.value.cities.includes(city)
+}
+
+const addPresetCity = (city: string) => {
+  if (!isCitySelected(city)) {
+    formData.value.cities.push(city)
+  }
+}
+
+const addCustomCity = () => {
+  const trimmedCity = newCity.value.trim()
+  if (trimmedCity && !isCitySelected(trimmedCity)) {
+    formData.value.cities.push(trimmedCity)
+    newCity.value = '' // Очищаем поле ввода
+  } else if (isCitySelected(trimmedCity)) {
+    showUploadStatus('info', 'Этот город уже добавлен')
+  }
+}
+
+const removeCity = (index: number) => {
+  if (formData.value.cities.length > 1) {
+    formData.value.cities.splice(index, 1)
+  } else {
+    showUploadStatus('error', 'Должен быть хотя бы один город отправления')
+  }
+}
 
 // Триггер выбора файла
 const triggerFileInput = () => {
@@ -463,6 +618,61 @@ const showUploadStatus = (type: 'success' | 'error' | 'info', message: string) =
   }, 3000)
 }
 
+// Обработчик дублирования экскурсии
+const handleDuplicate = async () => {
+  if (!duplicateDate.value) {
+    showUploadStatus('error', 'Выберите дату для новой экскурсии')
+    return
+  }
+
+  duplicateLoading.value = true
+
+  try {
+    // Подготовка данных экскурсии (берем текущие данные из формы)
+    const excursionData: ExcursionCreate = {
+      title: formData.value.title,
+      description: formData.value.description,
+      date: duplicateDate.value, // Используем новую дату
+      price: formData.value.price,
+      people_amount: formData.value.people_amount,
+      people_left: formData.value.people_amount, // people_left = people_amount для новой экскурсии
+      is_active: formData.value.is_active,
+      bus_number: formData.value.bus_number,
+      cities: formData.value.cities,
+    }
+
+    // Очистка детальной информации
+    const cleanedDetails = {
+      ...formData.value.details,
+      inclusions: formData.value.details.inclusions.filter((item) => item.trim() !== ''),
+      requirements: formData.value.details.requirements.filter((item) => item.trim() !== ''),
+      recommendations: formData.value.details.recommendations.filter((item) => item.trim() !== ''),
+      itinerary: formData.value.details.itinerary.filter((item) => item.title.trim() !== ''),
+    }
+
+    // Отправляем событие на создание дубликата
+    emit('duplicate', {
+      new: true,
+      excursion: excursionData,
+      details: cleanedDetails,
+      imagesToAdd: imagesToAdd.value,
+      imagesToDelete: imagesToDelete.value,
+      uploadedImages: uploadedImages.value,
+    })
+
+    // Очищаем поле даты после успешной отправки
+    duplicateDate.value = ''
+
+    showUploadStatus('success', 'Запрос на создание копии отправлен')
+
+  } catch (error) {
+    console.error('Error duplicating excursion:', error)
+    showUploadStatus('error', 'Ошибка при создании копии')
+  } finally {
+    duplicateLoading.value = false
+  }
+}
+
 // Обработчик отправки формы
 const handleSubmit = async () => {
   // Валидация
@@ -471,7 +681,8 @@ const handleSubmit = async () => {
     !formData.value.description ||
     !formData.value.date ||
     formData.value.price <= 0 ||
-    formData.value.people_amount <= 0
+    formData.value.people_amount <= 0 ||
+    formData.value.cities.length === 0
   ) {
     showUploadStatus('error', 'Заполните все обязательные поля')
     return
@@ -493,6 +704,7 @@ const handleSubmit = async () => {
     people_left: formData.value.people_left,
     is_active: formData.value.is_active,
     bus_number: formData.value.bus_number,
+    cities: formData.value.cities,
   }
 
   // Очистка детальной информации
@@ -506,6 +718,7 @@ const handleSubmit = async () => {
 
   // Отправка данных через emit
   emit('submit', {
+    new: false,
     excursion: excursionData,
     details: cleanedDetails,
     imagesToAdd: imagesToAdd.value,
@@ -570,6 +783,7 @@ const resetForm = () => {
     people_left: 0,
     is_active: true,
     bus_number: 0,
+    cities: [],
     details: {
       description: '',
       inclusions: [''],
@@ -590,6 +804,8 @@ const resetForm = () => {
   currentImageIndex.value = 0
   imagesToDelete.value = []
   imagesToAdd.value = []
+  duplicateDate.value = '' // Сбрасываем дату дублирования
+  newCity.value = ''
 }
 
 // Загрузка изображений существующей экскурсии
@@ -617,6 +833,7 @@ watch(
         people_left: card.people_left,
         is_active: card.is_active,
         bus_number: card.bus_number,
+        cities: card.cities || [],
         details: props.editingDetails || {
           description: '',
           inclusions: [''],
@@ -653,12 +870,12 @@ watch(
         itinerary: details.itinerary?.length
           ? details.itinerary
           : [
-            {
-              time: '',
-              title: '',
-              description: '',
-            },
-          ],
+              {
+                time: '',
+                title: '',
+                description: '',
+              },
+            ],
         meeting_point: details.meeting_point || '',
         requirements: details.requirements?.length ? details.requirements : [''],
         recommendations: details.recommendations?.length ? details.recommendations : [''],
@@ -685,6 +902,319 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
+/* Новые стили для городов */
+.cities-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid var(--border-turquoise);
+}
+
+.selected-cities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.city-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--green-primary);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.city-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove-city-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+  padding: 0;
+}
+
+.remove-city-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.remove-city-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-city-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.preset-cities {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.preset-label {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+.preset-city-btn {
+  padding: 8px 16px;
+  background: var(--white);
+  border: 2px solid var(--border-green-light);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.preset-city-btn:hover:not(:disabled) {
+  background: var(--green-bg-light);
+  border-color: var(--green-primary);
+  transform: translateY(-2px);
+}
+
+.preset-city-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--border-green-light);
+}
+
+.custom-city-add {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-city-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.custom-city-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid var(--border-turquoise);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.custom-city-input:focus {
+  outline: none;
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--hover-turquoise);
+}
+
+.custom-city-input:disabled {
+  background: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.add-city-btn {
+  padding: 10px 20px;
+  background: var(--green-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  white-space: nowrap;
+}
+
+.add-city-btn:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+
+.add-city-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.cities-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-green-light);
+}
+
+.cities-hints small {
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
+
+/* Адаптивность для блока городов */
+@media (max-width: 768px) {
+  .preset-cities {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .preset-buttons {
+    width: 100%;
+  }
+
+  .custom-city-input-group {
+    flex-direction: column;
+  }
+
+  .add-city-btn {
+    width: 100%;
+  }
+
+  .city-tag {
+    max-width: calc(50% - 5px);
+  }
+
+  .city-name {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .city-tag {
+    max-width: 100%;
+  }
+
+  .city-name {
+    max-width: none;
+  }
+
+  .preset-buttons {
+    gap: 5px;
+  }
+
+  .preset-city-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+}
+/* Добавляем новые стили для блока дублирования */
+.duplicate-section {
+  border: 2px dashed var(--green-primary);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  background: var(--green-bg-light);
+}
+
+.duplicate-form {
+  margin-top: 15px;
+}
+
+.duplicate-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.duplicate-date-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border-turquoise);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.duplicate-date-input:focus {
+  outline: none;
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--hover-turquoise);
+}
+
+.duplicate-btn {
+  width: 100%;
+  background: var(--green-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.duplicate-btn:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+
+.duplicate-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.duplicate-hint {
+  display: block;
+  margin-top: 10px;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Адаптивность для блока дублирования */
+@media (max-width: 768px) {
+  .duplicate-section .form-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .duplicate-actions {
+    align-items: stretch;
+  }
+
+  .duplicate-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .duplicate-section {
+    padding: 15px;
+  }
+
+  .duplicate-section .section-title {
+    font-size: 1rem;
+  }
+}
 /* Основные стили формы остаются без изменений */
 .form-overlay {
   position: fixed;

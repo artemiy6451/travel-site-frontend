@@ -66,6 +66,7 @@
       :editing-card="editingCard"
       :editing-details="editingDetails"
       @submit="saveCard"
+      @duplicate="saveCard"
       @cancel="cancelForm"
       @update:visible="showAddForm = $event"
     />
@@ -366,6 +367,7 @@ const showNotification = (message: string, type: 'success' | 'error' = 'success'
 
 // Обновляем метод saveCard для обработки изображений
 const saveCard = async (data: {
+  new: boolean
   excursion: ExcursionCreate
   details: ExcursionDetailsCreate
   imagesToAdd: File[]
@@ -378,7 +380,7 @@ const saveCard = async (data: {
     let excursion: Excursion
 
     // 1. Сохраняем/обновляем экскурсию
-    if (editingCard.value) {
+    if (editingCard.value && data.new == false) {
       // Обновляем существующую экскурсию
       excursion = await api.excursions.updateExcursion(editingCard.value.id, data.excursion)
 

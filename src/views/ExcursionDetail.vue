@@ -198,9 +198,8 @@ const handleBooking = () => {
   sendMetrik('booking-start')
 }
 
-const handleBookingSuccess = async (new_booking: BookingCreate) => {
+const handleBookingSuccess = async () => {
   // Показываем уведомление
-  alert('✅ Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.')
   sendMetrik('booking-end')
 }
 
