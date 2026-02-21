@@ -229,7 +229,9 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // Конфигурация Telegram бота
-const telegramBotUsername = 'lokach_dev_bot'
+const telegramBotUsername = import.meta.env.PROD
+  ? 'travelvv_booking_bot'
+  : 'lokach_dev_bot'
 const telegramBotBaseUrl = `https://t.me/${telegramBotUsername}`
 
 // Состояние для кастомного города
