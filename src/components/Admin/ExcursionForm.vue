@@ -49,6 +49,37 @@
             </div>
           </div>
 
+          <!-- НОВЫЙ БЛОК: Тип экскурсии -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Тип *</label>
+              <div class="type-selector">
+                <button
+                  type="button"
+                  class="type-btn"
+                  :class="{ active: formData.type === 'excursion' }"
+                  @click="formData.type = 'excursion'"
+                  :disabled="loading"
+                >
+                  <span class="type-icon">🚶</span>
+                  <span class="type-label">Экскурсия</span>
+                  <span class="type-description">Однодневная экскурсия</span>
+                </button>
+                <button
+                  type="button"
+                  class="type-btn"
+                  :class="{ active: formData.type === 'tour' }"
+                  @click="formData.type = 'tour'"
+                  :disabled="loading"
+                >
+                  <span class="type-icon">🏕️</span>
+                  <span class="type-label">Тур</span>
+                  <span class="type-description">Многодневный тур с проживанием</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- НОВЫЙ БЛОК: Города отправления -->
           <div class="form-group">
             <label>Города отправления *</label>
@@ -354,10 +385,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { type Excursion, type ExcursionCreate, type ExcursionImage } from '@/types/excursion'
 import BaseButton from '@/components/UI/BaseButton.vue'
 import { api } from '@/utils/api'
+
+// Тип экскурсии
+type ExcursionType = 'excursion' | 'tour'
 
 interface Props {
   visible: boolean
@@ -426,6 +460,7 @@ const getLoadingText = computed(() => {
 
 // Данные формы
 const formData = ref({
+  type: 'excursion' as ExcursionType,
   title: '',
   description: '',
   date: new Date(),
@@ -630,6 +665,7 @@ const handleDuplicate = async () => {
   try {
     // Подготовка данных экскурсии (берем текущие данные из формы)
     const excursionData: ExcursionCreate = {
+      type: formData.value.type,
       title: formData.value.title,
       description: formData.value.description,
       date: duplicateDate.value, // Используем новую дату
@@ -696,6 +732,7 @@ const handleSubmit = async () => {
 
   // Подготовка данных экскурсии
   const excursionData: ExcursionCreate = {
+    type: formData.value.type,
     title: formData.value.title,
     description: formData.value.description,
     date: formData.value.date,
@@ -775,6 +812,7 @@ const removeItineraryItem = (index: number) => {
 // Сброс формы
 const resetForm = () => {
   formData.value = {
+    type: 'excursion',
     title: '',
     description: '',
     date: new Date(),
@@ -825,6 +863,7 @@ watch(
   async (card) => {
     if (card) {
       formData.value = {
+        type: card.type || "excursion",
         title: card.title,
         description: card.description,
         date: card.date,
@@ -902,6 +941,126 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
+/* Новые стили для выбора типа */
+.type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 5px;
+}
+
+.type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 15px;
+  background: var(--white);
+  border: 2px solid var(--border-green-light);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.type-btn:hover:not(:disabled) {
+  border-color: var(--green-primary);
+  background: var(--green-bg-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-green-light);
+}
+
+.type-btn.active {
+  border-color: var(--green-primary);
+  background: var(--green-bg-light);
+  box-shadow: 0 4px 12px var(--shadow-green-light);
+  position: relative;
+}
+
+.type-btn.active::before {
+  content: '✓';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background: var(--green-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.type-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.type-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.type-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 5px;
+}
+
+.type-description {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  line-height: 1.3;
+}
+
+/* Адаптивность для выбора типа */
+@media (max-width: 768px) {
+  .type-selector {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .type-btn {
+    flex-direction: row;
+    text-align: left;
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .type-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+  }
+
+  .type-btn.active::before {
+    top: 50%;
+    transform: translateY(-50%);
+    right: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .type-btn {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .type-icon {
+    font-size: 1.3rem;
+  }
+
+  .type-label {
+    font-size: 1rem;
+  }
+
+  .type-description {
+    font-size: 0.75rem;
+  }
+}
 /* Новые стили для городов */
 .cities-section {
   display: flex;

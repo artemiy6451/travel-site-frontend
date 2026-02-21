@@ -31,7 +31,25 @@
 
 
       <div class="filters">
-        <!-- Добавляем переключатель -->
+        <!-- Добавляем переключатель для типа экскурсий (экскурсия/тур) -->
+        <div class="excursion-subtype-toggle">
+          <button
+            :class="['subtype-toggle-btn', { active: subtypeFilter === 'excursion' }]"
+            @click="setSubtypeFilter('excursion')"
+          >
+            <span class="subtype-icon">🚶</span>
+            Экскурсии
+          </button>
+          <button
+            :class="['subtype-toggle-btn', { active: subtypeFilter === 'tour' }]"
+            @click="setSubtypeFilter('tour')"
+          >
+            <span class="subtype-icon">🏕️</span>
+            Туры
+          </button>
+        </div>
+
+        <!-- Переключатель активных/неактивных -->
         <div class="excursion-type-toggle">
           <button
             :class="['type-toggle-btn', { active: excursionType === 'active' }]"
@@ -164,6 +182,7 @@ const checkScreenSize = () => {
 const cards = ref<Excursion[]>([])
 const searchQuery = ref('')
 const excursionType = ref<'active' | 'inactive'>('active')
+const subtypeFilter = ref<'excursion' | 'tour'>('excursion')
 
 // Пагинация
 const currentPage = ref(1)
@@ -208,6 +227,7 @@ const loadExcursions = async (page: number = currentPage.value) => {
   try {
     const skip = (page - 1) * pageSize.value
     const limit = pageSize.value
+    const excursion_type: string = subtypeFilter.value ?? 'excursion'
 
     let response: Excursion[]
 
@@ -215,12 +235,14 @@ const loadExcursions = async (page: number = currentPage.value) => {
     if (excursionType.value === 'active') {
       response = await api.excursions.getActiveExcursions({
         skip,
-        limit
+        limit,
+        excursion_type,
       })
     } else {
       response = await api.excursions.getNotActiveExcursions({
         skip,
-        limit
+        limit,
+        excursion_type,
       })
     }
 
@@ -255,6 +277,12 @@ const loadExcursions = async (page: number = currentPage.value) => {
   } finally {
     loading.value = false
   }
+}
+
+// Метод для изменения подтипа (экскурсия/тур)
+const setSubtypeFilter = (type: 'excursion' | 'tour') => {
+  subtypeFilter.value = type
+  loadExcursions()
 }
 
 // Метод для изменения типа экскурсий
@@ -613,6 +641,103 @@ const cancelForm = () => {
 </script>
 
 <style scoped>
+/* Добавляем стили для нового переключателя подтипов */
+.excursion-subtype-toggle {
+  display: flex;
+  background: var(--border-green-medium);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+  margin-right: 10px;
+}
+
+.subtype-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.subtype-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.subtype-toggle-btn.active {
+  background: var(--green-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.subtype-icon {
+  font-size: 1.1rem;
+}
+
+/* Адаптивные стили для переключателей */
+@media (max-width: 768px) {
+  .excursion-subtype-toggle {
+    order: -2;
+    width: 100%;
+    justify-content: center;
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .subtype-toggle-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .excursion-type-toggle {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .type-toggle-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .subtype-toggle-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .subtype-icon {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .subtype-toggle-btn {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+  }
+
+  .subtype-icon {
+    font-size: 1.2rem;
+  }
+}
+
 .admin-panel {
   max-width: 1300px;
   margin: 0 auto;

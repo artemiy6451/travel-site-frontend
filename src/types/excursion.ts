@@ -1,5 +1,6 @@
 export interface Excursion {
   id: number
+  type: string
   title: string
   description: string
   date: Date
@@ -13,6 +14,7 @@ export interface Excursion {
 }
 
 export interface ExcursionCreate {
+  type: string
   title: string
   description: string
   date: Date
@@ -25,6 +27,7 @@ export interface ExcursionCreate {
 }
 
 export interface ExcursionUpdate {
+  type?: string
   title?: string
   description?: string
   date?: Date
