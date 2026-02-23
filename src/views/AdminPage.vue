@@ -38,14 +38,14 @@
             @click="setSubtypeFilter('excursion')"
           >
             <span class="subtype-icon">🚶</span>
-            Экскурсии
+            Экскурсии по Крыму
           </button>
           <button
             :class="['subtype-toggle-btn', { active: subtypeFilter === 'tour' }]"
             @click="setSubtypeFilter('tour')"
           >
             <span class="subtype-icon">🏕️</span>
-            Туры
+            Туры на материк
           </button>
         </div>
 

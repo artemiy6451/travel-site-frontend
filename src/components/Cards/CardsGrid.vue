@@ -11,7 +11,7 @@
         :disabled="loading"
       >
         <span class="type-icon">🚶</span>
-        <span class="type-label">Экскурсии</span>
+        <span class="type-label">Экскурсии по Крыму</span>
       </button>
       <button
         class="type-toggle-btn"
@@ -20,7 +20,7 @@
         :disabled="loading"
       >
         <span class="type-icon">🏕️</span>
-        <span class="type-label">Туры</span>
+        <span class="type-label">Туры на материк</span>
       </button>
     </div>
 
