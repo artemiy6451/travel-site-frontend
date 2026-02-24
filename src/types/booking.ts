@@ -16,4 +16,5 @@ export interface BookingCreate {
   phone_number: string
   total_people: number
   children?: number
+  city: string
 }

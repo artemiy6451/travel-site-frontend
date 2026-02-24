@@ -28,26 +28,60 @@
           </div>
 
           <!-- Форма бронирования -->
-          <form @submit.prevent="submitBooking(formData)" class="booking-form">
+          <form @submit.prevent="validateAndSubmit" class="booking-form">
+            <!-- Блок с ошибками валидации -->
+            <div v-if="validationErrors.length > 0" class="validation-errors">
+              <div class="validation-title">⚠️ Пожалуйста, заполните следующие поля:</div>
+              <ul class="validation-list">
+                <li v-for="(error, index) in validationErrors" :key="index" class="validation-item">
+                  {{ error }}
+                </li>
+              </ul>
+            </div>
+
             <div class="form-section">
               <h3 class="section-title">Контактные данные</h3>
 
               <div class="form-row">
-                <div class="form-group">
+                <div class="form-group" :class="{ 'has-error': fieldErrors.last_name }">
                   <label for="lastName" class="form-label">Фамилия *</label>
-                  <input id="lastName" v-model="formData.last_name" type="text" class="form-input" required
-                    placeholder="Введите вашу фамилию" />
+                  <input
+                    id="lastName"
+                    v-model="formData.last_name"
+                    type="text"
+                    class="form-input"
+                    :class="{ 'error': fieldErrors.last_name }"
+                    required
+                    placeholder="Введите вашу фамилию"
+                    @blur="validateField('last_name')"
+                    @input="clearFieldError('last_name')"
+                  />
+                  <div v-if="fieldErrors.last_name" class="field-error">
+                    {{ fieldErrors.last_name }}
+                  </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" :class="{ 'has-error': fieldErrors.first_name }">
                   <label for="firstName" class="form-label">Имя *</label>
-                  <input id="firstName" v-model="formData.first_name" type="text" class="form-input" required
-                    placeholder="Введите ваше имя" />
+                  <input
+                    id="firstName"
+                    v-model="formData.first_name"
+                    type="text"
+                    class="form-input"
+                    :class="{ 'error': fieldErrors.first_name }"
+                    required
+                    placeholder="Введите ваше имя"
+                    @blur="validateField('first_name')"
+                    @input="clearFieldError('first_name')"
+                  />
+                  <div v-if="fieldErrors.first_name" class="field-error">
+                    {{ fieldErrors.first_name }}
+                  </div>
                 </div>
               </div>
 
-              <!-- НОВЫЙ БЛОК: Выбор города -->
-              <div class="form-group">
+              <!-- Блок выбора города -->
+              <div class="form-group" :class="{ 'has-error': fieldErrors.city }">
                 <label for="city" class="form-label">Город *</label>
 
                 <!-- Варианты предустановленных городов -->
@@ -57,7 +91,10 @@
                     :key="city"
                     type="button"
                     class="city-option-btn"
-                    :class="{ active: formData.city === city && !isCustomCity }"
+                    :class="{
+                      active: formData.city === city && !isCustomCity,
+                      'error-border': fieldErrors.city && !formData.city
+                    }"
                     @click="selectCity(city)"
                   >
                     {{ city }}
@@ -65,7 +102,10 @@
                   <button
                     type="button"
                     class="city-option-btn custom"
-                    :class="{ active: isCustomCity }"
+                    :class="{
+                      active: isCustomCity,
+                      'error-border': fieldErrors.city && !formData.city
+                    }"
                     @click="enableCustomCity"
                   >
                     ✏️ Другой
@@ -79,9 +119,11 @@
                     v-model="formData.city"
                     type="text"
                     class="form-input"
+                    :class="{ 'error': fieldErrors.city }"
                     required
                     placeholder="Введите название вашего города"
                     @input="validateCustomCity"
+                    @blur="validateField('city')"
                   />
                   <button
                     type="button"
@@ -95,13 +137,28 @@
 
                 <!-- Подсказка для поля город -->
                 <div class="input-hint">Выберите ваш город из списка или укажите свой вариант</div>
+                <div v-if="fieldErrors.city" class="field-error">
+                  {{ fieldErrors.city }}
+                </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group" :class="{ 'has-error': fieldErrors.phone_number }">
                 <label for="phone" class="form-label">Номер телефона *</label>
-                <input id="phone" v-model="formData.phone_number" type="tel" class="form-input" required
-                  placeholder="+7 (XXX) XXX-XX-XX" @input="formatPhone" />
+                <input
+                  id="phone"
+                  v-model="formData.phone_number"
+                  type="tel"
+                  class="form-input"
+                  :class="{ 'error': fieldErrors.phone_number }"
+                  required
+                  placeholder="+7 (XXX) XXX-XX-XX"
+                  @input="formatPhone"
+                  @blur="validateField('phone_number')"
+                />
                 <div class="input-hint">Формат: +7 XXX XXX-XX-XX</div>
+                <div v-if="fieldErrors.phone_number" class="field-error">
+                  {{ fieldErrors.phone_number }}
+                </div>
               </div>
             </div>
 
@@ -109,7 +166,7 @@
               <h3 class="section-title">Участники</h3>
 
               <div class="people-selector">
-                <div class="people-group">
+                <div class="people-group" :class="{ 'has-error': fieldErrors.total_people }">
                   <label class="people-label">Всего человек *</label>
                   <div class="people-counter">
                     <button type="button" class="counter-btn minus" @click="decrementTotal"
@@ -124,17 +181,14 @@
                   </div>
                   <div class="people-hint">Максимум: {{ maxPeople }} человек</div>
                 </div>
+                <div v-if="fieldErrors.total_people" class="field-error">
+                  {{ fieldErrors.total_people }}
+                </div>
               </div>
 
               <!-- Итоговая стоимость -->
               <div class="price-summary">
-                <div class="price-row">
-                  <span>Взрослые ({{ adultsCount }} × {{ formatPrice(excursion?.price || 0) }})</span>
-                </div>
-                <div class="price-total">
-                  <span>Итого:</span>
-                  <span class="total-amount">{{ formatPrice(totalPrice) }}</span>
-                </div>
+                <!-- ... существующий код ... -->
               </div>
             </div>
 
@@ -143,7 +197,7 @@
               <button type="button" class="btn-secondary" @click="closeModal" :disabled="loading">
                 Отмена
               </button>
-              <button type="submit" class="btn-primary" :disabled="loading || !isFormValid">
+              <button type="submit" class="btn-primary" :disabled="loading">
                 <span v-if="loading">Отправка...</span>
                 <span v-else>Забронировать</span>
               </button>
@@ -254,6 +308,139 @@ const formData = ref<BookingCreate>({
   city: '', // Добавляем поле city
 })
 
+// Состояние для ошибок валидации
+const fieldErrors = ref<Record<string, string>>({
+  first_name: '',
+  last_name: '',
+  city: '',
+  phone_number: '',
+  total_people: ''
+})
+
+const validationErrors = ref<string[]>([])
+
+// Функция валидации отдельного поля
+const validateField = (field: string) => {
+  switch (field) {
+    case 'first_name':
+      if (!formData.value.first_name.trim()) {
+        fieldErrors.value.first_name = 'Укажите ваше имя'
+      } else if (formData.value.first_name.trim().length < 2) {
+        fieldErrors.value.first_name = 'Имя должно содержать минимум 2 символа'
+      } else {
+        fieldErrors.value.first_name = ''
+      }
+      break
+
+    case 'last_name':
+      if (!formData.value.last_name.trim()) {
+        fieldErrors.value.last_name = 'Укажите вашу фамилию'
+      } else if (formData.value.last_name.trim().length < 2) {
+        fieldErrors.value.last_name = 'Фамилия должна содержать минимум 2 символа'
+      } else {
+        fieldErrors.value.last_name = ''
+      }
+      break
+
+    case 'city':
+      if (!formData.value.city?.trim()) {
+        fieldErrors.value.city = 'Выберите или укажите ваш город'
+      } else if (formData.value.city.trim().length < 2) {
+        fieldErrors.value.city = 'Название города должно содержать минимум 2 символа'
+      } else {
+        fieldErrors.value.city = ''
+      }
+      break
+
+    case 'phone_number':
+      const phoneDigits = formData.value.phone_number.replace(/\D/g, '')
+      if (!phoneDigits) {
+        fieldErrors.value.phone_number = 'Укажите номер телефона'
+      } else if (phoneDigits.length < 11) {
+        fieldErrors.value.phone_number = 'Номер телефона должен содержать 11 цифр'
+      } else {
+        fieldErrors.value.phone_number = ''
+      }
+      break
+
+    case 'total_people':
+      if (formData.value.total_people <= 0) {
+        fieldErrors.value.total_people = 'Укажите количество человек'
+      } else if (formData.value.total_people > maxPeople.value) {
+        fieldErrors.value.total_people = `Максимум ${maxPeople.value} человек`
+      } else {
+        fieldErrors.value.total_people = ''
+      }
+      break
+  }
+}
+
+// Очистка ошибки поля при вводе
+const clearFieldError = (field: string) => {
+  fieldErrors.value[field] = ''
+}
+
+// Полная валидация формы
+const validateForm = (): boolean => {
+  // Проверяем все поля
+  validateField('first_name')
+  validateField('last_name')
+  validateField('city')
+  validateField('phone_number')
+  validateField('total_people')
+
+  // Собираем все ошибки для общего списка
+  const errors: string[] = []
+
+  if (!formData.value.first_name.trim()) {
+    errors.push('Укажите ваше имя')
+  }
+  if (!formData.value.last_name.trim()) {
+    errors.push('Укажите вашу фамилию')
+  }
+  if (!formData.value.city?.trim()) {
+    errors.push('Выберите или укажите ваш город')
+  }
+
+  const phoneDigits = formData.value.phone_number.replace(/\D/g, '')
+  if (!phoneDigits) {
+    errors.push('Укажите номер телефона')
+  } else if (phoneDigits.length < 11) {
+    errors.push('Номер телефона должен содержать 11 цифр')
+  }
+
+  if (formData.value.total_people <= 0) {
+    errors.push('Укажите количество человек')
+  } else if (formData.value.total_people > maxPeople.value) {
+    errors.push(`Максимальное количество человек: ${maxPeople.value}`)
+  }
+
+  validationErrors.value = errors
+
+  return errors.length === 0
+}
+
+// Скролл к первому полю с ошибкой
+const scrollToFirstError = () => {
+  const firstErrorField = document.querySelector('.form-group.has-error')
+  if (firstErrorField) {
+    firstErrorField.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+  }
+}
+
+// Обновленный метод отправки с валидацией
+const validateAndSubmit = () => {
+  if (validateForm()) {
+    submitBooking(formData.value)
+  } else {
+    // Показываем ошибки и скроллим к первой
+    scrollToFirstError()
+  }
+}
+
 // Следим за изменением экскурсии
 watch(
   () => props.excursion,
@@ -264,6 +451,21 @@ watch(
   },
   { immediate: true },
 )
+
+// Очищаем ошибки при открытии формы
+watch(() => props.visible, (visible) => {
+  if (visible) {
+    // Сбрасываем ошибки при открытии
+    fieldErrors.value = {
+      first_name: '',
+      last_name: '',
+      city: '',
+      phone_number: '',
+      total_people: ''
+    }
+    validationErrors.value = []
+  }
+})
 
 // Генерация ссылки для Telegram бота
 const telegramBotUrl = computed(() => {
@@ -288,23 +490,11 @@ const isFormValid = computed(() => {
   )
 })
 
-// Расчет стоимости
-const adultsCount = computed(() => {
-  return formData.value.total_people - (formData.value.children || 0)
-})
-
-const adultsPrice = computed(() => {
-  return adultsCount.value * (props.excursion?.price || 0)
-})
-
-const totalPrice = computed(() => {
-  return adultsPrice.value
-})
-
 // Методы для работы с городом
 const selectCity = (city: string) => {
   formData.value.city = city
   isCustomCity.value = false
+  validateField('city')
 }
 
 const enableCustomCity = () => {
@@ -317,13 +507,10 @@ const clearCustomCity = () => {
 }
 
 const validateCustomCity = () => {
-  // Можно добавить валидацию при необходимости
-  // Например, минимальная длина
   if (formData.value.city && formData.value.city.length < 2) {
-    // Показываем предупреждение, но не блокируем ввод
-    error.value = 'Название города должно содержать минимум 2 символа'
+    fieldErrors.value.city = 'Название города должно содержать минимум 2 символа'
   } else {
-    error.value = ''
+    fieldErrors.value.city = ''
   }
 }
 
@@ -473,6 +660,99 @@ const closeModal = () => {
 </script>
 
 <style scoped>
+/* Добавляем новые стили для валидации */
+.validation-errors {
+  background: #fff3f3;
+  border: 2px solid #ff6b6b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 25px;
+  animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.validation-title {
+  font-weight: 700;
+  color: #d32f2f;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.validation-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #d32f2f;
+}
+
+.validation-item {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+/* Стили для полей с ошибками */
+.form-group.has-error .form-label {
+  color: #d32f2f;
+}
+
+.form-input.error {
+  border-color: #d32f2f;
+  background-color: #fff8f8;
+}
+
+.form-input.error:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+}
+
+.city-option-btn.error-border {
+  border-color: #d32f2f;
+  background-color: #fff8f8;
+}
+
+.field-error {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-error::before {
+  content: '⚠️';
+  font-size: 0.8rem;
+}
+
+/* Стили для группы людей с ошибкой */
+.people-group.has-error {
+  border-color: #d32f2f;
+  background-color: #fff8f8;
+}
+
+/* Анимация для привлечения внимания */
+@keyframes pulse-error {
+  0% {
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(211, 47, 47, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+  }
+}
+
+.form-group.has-error {
+  animation: pulse-error 1.5s infinite;
+}
+
 /* Добавляем новые стили для выбора города */
 .city-options {
   display: flex;
