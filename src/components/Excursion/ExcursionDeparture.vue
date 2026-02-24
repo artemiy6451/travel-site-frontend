@@ -66,7 +66,6 @@ const formattedDate = computed((): string => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 15px;
   padding: 8px 12px;
   background: var(--green-bg-light);
   border-radius: 8px;

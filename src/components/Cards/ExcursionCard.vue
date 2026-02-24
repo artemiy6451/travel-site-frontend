@@ -22,8 +22,31 @@
       </div>
 
       <div class="card-details">
+        <!-- НОВЫЙ БЛОК: Города отправления -->
+        <div v-if="excursion.cities && excursion.cities.length > 0" class="cities-info">
+          <div class="cities-header">
+            <span class="cities-icon">🚩</span>
+            <span class="cities-label" v-if="excursion.cities.length > 1">Города отправления:</span>
+            <span class="cities-label" v-else>Город отправления:</span>
+          </div>
+          <div class="cities-list">
+            <span
+              v-for="(city, index) in visibleCities"
+              :key="index"
+              class="city-tag"
+              :class="{ 'main-city': index === 0 }"
+            >
+              {{ city }}
+            </span>
+            <span v-if="excursion.cities.length > 3" class="more-cities">
+              +{{ excursion.cities.length - 3 }}
+            </span>
+          </div>
+        </div>
+
         <!-- Используем компонент отправления -->
         <ExcursionDeparture :date="excursion.date" />
+
         <!-- Красивое отображение оставшихся мест -->
         <div class="people-info" :class="getPeopleStatusClass(excursion)">
           <div class="people-icon">👥</div>
@@ -79,6 +102,10 @@ const isUpcomingSoon = computed((): boolean => {
   const now = new Date()
   const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   return date > now && date <= weekFromNow
+})
+
+const visibleCities = computed(() => {
+return props.excursion.cities?.slice(0, 3) || []
 })
 </script>
 
@@ -288,6 +315,12 @@ const isUpcomingSoon = computed((): boolean => {
   line-height: 1.5;
   margin-bottom: 15px;
   font-size: 0.95rem;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: none;
 }
 
 .card-details {
@@ -295,7 +328,70 @@ const isUpcomingSoon = computed((): boolean => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.cities-info {
+  width: 100%;
+  background: var(--green-bg-light);
+  border: 1px solid var(--shadow-green);
+  border-radius: 12px;
+  padding: 10px 12px;
+  transition: all 0.3s ease;
+}
+
+.cities-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.cities-icon {
+  font-size: 1rem;
+}
+
+.cities-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.cities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.city-tag {
+  padding: 4px 10px;
+  background: var(--white);
+  border: 1px solid var(--border-green);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  transition: all 0.2s ease;
+}
+
+.city-tag.main-city {
+  background: var(--green-primary);
+  border-color: var(--green-primary);
+  color: var(--white);
+  font-weight: 600;
+}
+
+.more-cities {
+  padding: 4px 8px;
+  background: var(--green-bg-light);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-medium);
 }
 
 /* Стили для информации о местах */
@@ -411,6 +507,20 @@ const isUpcomingSoon = computed((): boolean => {
     width: 6px;
     height: 6px;
   }
+
+  /* Адаптивность для городов */
+  .city-tag {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+  }
+
+  .cities-header {
+    margin-bottom: 5px;
+  }
+
+  .cities-label {
+    font-size: 0.7rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -435,6 +545,16 @@ const isUpcomingSoon = computed((): boolean => {
   .card-price {
     font-size: 1rem;
     padding: 6px 12px;
+  }
+
+  .city-tag {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+  }
+
+  .more-cities {
+    font-size: 0.7rem;
+    padding: 3px 6px;
   }
 }
 
