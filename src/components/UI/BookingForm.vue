@@ -45,17 +45,9 @@
               <div class="form-row">
                 <div class="form-group" :class="{ 'has-error': fieldErrors.last_name }">
                   <label for="lastName" class="form-label">Фамилия *</label>
-                  <input
-                    id="lastName"
-                    v-model="formData.last_name"
-                    type="text"
-                    class="form-input"
-                    :class="{ 'error': fieldErrors.last_name }"
-                    required
-                    placeholder="Введите вашу фамилию"
-                    @blur="validateField('last_name')"
-                    @input="clearFieldError('last_name')"
-                  />
+                  <input id="lastName" v-model="formData.last_name" type="text" class="form-input"
+                    :class="{ 'error': fieldErrors.last_name }" required placeholder="Введите вашу фамилию"
+                    @blur="validateField('last_name')" @input="clearFieldError('last_name')" />
                   <div v-if="fieldErrors.last_name" class="field-error">
                     {{ fieldErrors.last_name }}
                   </div>
@@ -63,102 +55,61 @@
 
                 <div class="form-group" :class="{ 'has-error': fieldErrors.first_name }">
                   <label for="firstName" class="form-label">Имя *</label>
-                  <input
-                    id="firstName"
-                    v-model="formData.first_name"
-                    type="text"
-                    class="form-input"
-                    :class="{ 'error': fieldErrors.first_name }"
-                    required
-                    placeholder="Введите ваше имя"
-                    @blur="validateField('first_name')"
-                    @input="clearFieldError('first_name')"
-                  />
+                  <input id="firstName" v-model="formData.first_name" type="text" class="form-input"
+                    :class="{ 'error': fieldErrors.first_name }" required placeholder="Введите ваше имя"
+                    @blur="validateField('first_name')" @input="clearFieldError('first_name')" />
                   <div v-if="fieldErrors.first_name" class="field-error">
                     {{ fieldErrors.first_name }}
                   </div>
                 </div>
               </div>
+            </div>
 
-              <!-- Блок выбора города -->
-              <div class="form-group" :class="{ 'has-error': fieldErrors.city }">
-                <label for="city" class="form-label">Город *</label>
+            <!-- Блок выбора города -->
+            <div class="form-group" :class="{ 'has-error': fieldErrors.city }">
+              <label class="form-label">Точка отправления *</label>
 
-                <!-- Варианты предустановленных городов -->
-                <div class="city-options">
-                  <button
-                    v-for="city in excursion?.cities"
-                    :key="city"
-                    type="button"
-                    class="city-option-btn"
-                    :class="{
-                      active: formData.city === city && !isCustomCity,
-                      'error-border': fieldErrors.city && !formData.city
-                    }"
-                    @click="selectCity(city)"
-                  >
-                    {{ city }}
-                  </button>
-                  <button
-                    type="button"
-                    class="city-option-btn custom"
-                    :class="{
-                      active: isCustomCity,
-                      'error-border': fieldErrors.city && !formData.city
-                    }"
-                    @click="enableCustomCity"
-                  >
-                    ✏️ Другой
-                  </button>
+              <!-- Карта -->
+              <transition name="slide">
+                <div class="map-wrapper">
+                  <DeparturePointsMap :points="departurePoints" :selected-point="selectedPoint"
+                    @point-select="handlePointSelect" />
+                </div>
+              </transition>
+
+              <!-- Выбранная точка -->
+              <div v-if="selectedPoint" class="selected-point-card">
+                <div class="point-badge">
+                  <span class="badge-icon">📍</span>
+                  <span class="badge-text">Выбрана точка отправления</span>
                 </div>
 
-                <!-- Поле для своего варианта города -->
-                <div v-if="isCustomCity" class="custom-city-input">
-                  <input
-                    id="customCity"
-                    v-model="formData.city"
-                    type="text"
-                    class="form-input"
-                    :class="{ 'error': fieldErrors.city }"
-                    required
-                    placeholder="Введите название вашего города"
-                    @input="validateCustomCity"
-                    @blur="validateField('city')"
-                  />
-                  <button
-                    type="button"
-                    class="clear-custom-btn"
-                    @click="clearCustomCity"
-                    title="Очистить"
-                  >
-                    ×
+                <div class="point-details">
+                  <div class="point-main">
+                    <span class="point-city">{{ selectedPoint.city }}</span>
+                    <span class="point-address">{{ selectedPoint.address }}</span>
+                  </div>
+                  <button class="change-point-btn" @click="selectedPoint = null">
+                    Изменить
                   </button>
-                </div>
-
-                <!-- Подсказка для поля город -->
-                <div class="input-hint">Выберите ваш город из списка или укажите свой вариант</div>
-                <div v-if="fieldErrors.city" class="field-error">
-                  {{ fieldErrors.city }}
                 </div>
               </div>
 
-              <div class="form-group" :class="{ 'has-error': fieldErrors.phone_number }">
-                <label for="phone" class="form-label">Номер телефона *</label>
-                <input
-                  id="phone"
-                  v-model="formData.phone_number"
-                  type="tel"
-                  class="form-input"
-                  :class="{ 'error': fieldErrors.phone_number }"
-                  required
-                  placeholder="+7 (XXX) XXX-XX-XX"
-                  @input="formatPhone"
-                  @blur="validateField('phone_number')"
-                />
-                <div class="input-hint">Формат: +7 XXX XXX-XX-XX</div>
-                <div v-if="fieldErrors.phone_number" class="field-error">
-                  {{ fieldErrors.phone_number }}
-                </div>
+              <!-- Подсказка для поля город -->
+              <div class="input-hint">Выберите ваш город на карте</div>
+              <div v-if="fieldErrors.city" class="field-error">
+                {{ fieldErrors.city }}
+              </div>
+            </div>
+
+            <div class="form-group" :class="{ 'has-error': fieldErrors.phone_number }">
+              <label for="phone" class="form-label">Номер телефона *</label>
+              <input id="phone" v-model="formData.phone_number" type="tel" class="form-input"
+                :class="{ 'error': fieldErrors.phone_number }" required placeholder="+7 (XXX) XXX-XX-XX"
+                @input="formatPhone" @blur="validateField('phone_number')" />
+              <div class="input-hint">Формат: +7 XXX XXX-XX-XX</div>
+              <div v-if="fieldErrors.phone_number" class="field-error">
+                {{ fieldErrors.phone_number }}
               </div>
             </div>
 
@@ -186,10 +137,6 @@
                 </div>
               </div>
 
-              <!-- Итоговая стоимость -->
-              <div class="price-summary">
-                <!-- ... существующий код ... -->
-              </div>
             </div>
 
             <!-- Кнопки -->
@@ -267,6 +214,8 @@ import { ref, computed, watch, nextTick } from 'vue'
 import type { BookingCreate } from '@/types/booking'
 import type { Excursion } from '@/types/excursion'
 import { api } from '@/utils/api'
+import DeparturePointsMap from '@/components/UI/DeparturePointsMap.vue'
+import type { DeparturePoint } from '@/components/UI/DeparturePointsMap.vue'
 
 interface Props {
   visible: boolean
@@ -296,6 +245,49 @@ const error = ref('')
 const bookingSuccess = ref(false)
 const bookingId = ref<number | null>(null)
 const copyButtonText = ref('Скопировать ссылку')
+
+
+// Данные о точках отправления
+const departurePoints = computed(() => {
+  if (!props.excursion?.cities) return []
+
+  return props.excursion.cities.map((city, index) => ({
+    id: index,
+    city: city,
+    address: getAddressForCity(city),
+    coordinates: getCoordinatesForCity(city),
+    description: getAddressForCity(city),
+  }))
+})
+
+// Координаты городов Крыма
+const getCoordinatesForCity = (city: string): [number, number] => {
+  const coordinates: Record<string, [number, number]> = {
+    'Симферополь': [34.078771, 44.969609],
+    'Севастополь': [33.525017, 44.564059],
+    'Бахчисарай': [33.872240, 44.765413],
+  }
+
+  return coordinates[city]
+}
+
+const getAddressForCity = (city: string): string => {
+  const addresses: Record<string, string> = {
+    'Симферополь': 'ТРЦ Меганом, район аптеки "Авицена"',
+    'Севастополь': 'Проспект Генерала Острякова, 164 (Карман)',
+    'Бахчисарай': 'Заправка ATAN',
+  }
+
+  return addresses[city]
+}
+
+const selectedPoint = ref<DeparturePoint | null>(null)
+
+// Обработка выбора точки
+const handlePointSelect = (point: DeparturePoint) => {
+  selectedPoint.value = point
+  formData.value.city = point.city
+}
 
 // Данные формы
 const formData = ref<BookingCreate>({
@@ -344,7 +336,7 @@ const validateField = (field: string) => {
 
     case 'city':
       if (!formData.value.city?.trim()) {
-        fieldErrors.value.city = 'Выберите или укажите ваш город'
+        fieldErrors.value.city = 'Выберите ваш город'
       } else if (formData.value.city.trim().length < 2) {
         fieldErrors.value.city = 'Название города должно содержать минимум 2 символа'
       } else {
@@ -660,6 +652,145 @@ const closeModal = () => {
 </script>
 
 <style scoped>
+.map-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--green-bg-light);
+  border: 2px solid var(--border-green);
+  border-radius: 10px;
+  color: var(--text-dark);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.map-toggle-btn:hover {
+  background: var(--green-lightest);
+  border-color: var(--green-primary);
+  transform: translateY(-2px);
+}
+
+.toggle-icon {
+  font-size: 1.1rem;
+}
+
+.map-wrapper {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px var(--shadow-default);
+}
+
+.selected-point-card {
+  background: linear-gradient(135deg, #f0f9f4 0%, #e8f3e9 100%);
+  border: 2px solid var(--green-primary);
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.point-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-primary);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.badge-icon {
+  font-size: 1rem;
+}
+
+.badge-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.point-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.point-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.point-city {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.point-address {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+}
+
+.change-point-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border-green);
+  border-radius: 6px;
+  color: var(--text-medium);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.change-point-btn:hover {
+  background: white;
+  border-color: var(--green-primary);
+  color: var(--text-dark);
+}
+
+.map-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  color: #1976d2;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+.hint-icon {
+  font-size: 1.1rem;
+}
+
+.hint-text {
+  flex: 1;
+}
+
+/* Анимация */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+}
+
 /* Добавляем новые стили для валидации */
 .validation-errors {
   background: #fff3f3;
@@ -671,9 +802,26 @@ const closeModal = () => {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 
 .validation-title {
@@ -741,9 +889,11 @@ const closeModal = () => {
   0% {
     box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(211, 47, 47, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
   }
@@ -807,6 +957,7 @@ const closeModal = () => {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -865,6 +1016,7 @@ const closeModal = () => {
     text-align: center;
   }
 }
+
 .booking-modal-overlay {
   position: fixed;
   top: 0;

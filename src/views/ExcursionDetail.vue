@@ -121,7 +121,6 @@ import ExcursionIncluded from '@/components/Excursion/ExcursionIncluded.vue'
 import ExcursionItinerary from '@/components/Excursion/ExcursionItinerary.vue'
 import BookingForm from '@/components/UI/BookingForm.vue'
 import ImageCarousel from '@/components/UI/ImageCarousel.vue'
-import type { BookingCreate } from '@/types/booking'
 import { sendMetrik } from '@/utils/metrika'
 import { format_people_left_title, formatPrice } from '@/utils/format'
 
@@ -130,6 +129,7 @@ const router = useRouter()
 
 const excursion = ref<ExcursionFullInfo>({
   id: 0,
+  type: '',
   title: '',
   description: '',
   date: new Date(),
@@ -140,6 +140,7 @@ const excursion = ref<ExcursionFullInfo>({
   images: [],
   details: undefined,
   bus_number: 0,
+  cities: [] as string[],
 })
 
 const loading = ref(false)
